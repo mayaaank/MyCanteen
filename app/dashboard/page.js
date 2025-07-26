@@ -1,9 +1,8 @@
-// app/dashboard/page.js
 export default function DashboardPage() {
   return (
     <div>
-      <h2>Admin Dashboard</h2>
-      <p>Overview of today's attendance, orders, and menu.</p>
+      <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
+      <p>Welcome to the admin dashboard.</p>
     </div>
   );
 }
