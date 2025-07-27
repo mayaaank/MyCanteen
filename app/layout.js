@@ -1,15 +1,10 @@
-// app/layout.js
 import "@/app/globals.css";
 import Sidebar from "@/components/Sidebar";
 import BottomNav from "@/components/BottomNav";
 
-export const metadata = {
-  title: "MyCanteen",
-  description: "Digital Canteen Management System",
-};
-
 export default function RootLayout({ children }) {
   return (
+
     <html lang="en">
       <body className="flex min-h-screen bg-gray-50">
         {/* Sidebar */}
@@ -24,6 +19,7 @@ export default function RootLayout({ children }) {
             <BottomNav />
           </div>
         </div>
+
       </body>
     </html>
   );
