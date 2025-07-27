@@ -23,15 +23,15 @@ const developers = [
     description: 'Crafted the user interface with React and Next.js. Focused on creating seamless user experiences.'
   },
   { 
-    name: 'Vashnavi', 
+    name: 'Vaishnavi', 
     role: 'UI/UX Designer', 
-    image: '/developer3.jpg',
+    image: '/developer4.jpg',
     description: 'Designed the visual identity and user flows. Ensures accessibility and intuitive navigation.'
   },
   { 
     name: 'Kanak', 
     role: 'Full Stack Developer', 
-    image: '/developer4.jpg',
+    image: '/developer3.jpg',
     description: 'Bridges frontend and backend systems. Implements features across the entire stack.'
   }
 ]
@@ -53,7 +53,7 @@ export default function LandingPage() {
     <main className="min-h-screen flex flex-col bg-white text-gray-900 pt-16 relative">
       {/* Developers Overlay */}
       {showDevelopers && (
-        <div className="fixed inset-0 z-40 bg-blue-800/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-40 bg-white-800/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="max-w-6xl w-full bg-white rounded-xl shadow-2xl overflow-hidden my-8">
             <div className="p-6 bg-blue-700 text-white sticky top-0 z-10">
               <div className="flex justify-between items-center">
@@ -123,7 +123,7 @@ export default function LandingPage() {
             mycanteen brings everyone to the table. Enjoy seamless meal tracking and community dining every day.
           </p>
           <button
-            onClick={() => router.push('/signup')}
+            onClick={() => router.push('/login')}
             className="bg-blue-700 text-white px-8 py-3 rounded-full font-semibold text-lg shadow hover:bg-blue-800 transition"
           >
             Get Started
