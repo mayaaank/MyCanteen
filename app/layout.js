@@ -1,3 +1,4 @@
+
 'use client'
 
 import BottomNavbar from '@/components/BottomNavbar'
@@ -5,6 +6,7 @@ import BottomNavbar from '@/components/BottomNavbar'
 import { useEffect } from 'react'
 import { initializeAdmin } from '../utils/initializeAdmin'
 import './globals.css'
+
 
 export default function RootLayout({ children }) {
   useEffect(() => {
