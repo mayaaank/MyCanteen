@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 export default function AdminDashboard() {
   const router = useRouter()
+  const supabase = createClientComponentClient()
   const [users, setUsers] = useState([])
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -13,28 +15,64 @@ export default function AdminDashboard() {
     checkAuthAndLoadData()
   }, [])
 
-  const checkAuthAndLoadData = () => {
-    // Check if user is admin
-    const user = JSON.parse(localStorage.getItem('currentUser'))
-    if (!user || user.role !== 'admin') {
+  const checkAuthAndLoadData = async () => {
+    try {
+      // Get current session
+      const { data: { user } } = await supabase.auth.getUser()
+      
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      // Verify admin role
+      if (user.user_metadata?.role !== 'admin') {
+        router.push('/unauthorized')
+        return
+      }
+
+      setCurrentUser({
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email.split('@')[0]
+      })
+
+      // Load users data
+      await loadUsers()
+    } catch (error) {
+      console.error('Error:', error)
       router.push('/login')
-      return
+    } finally {
+      setLoading(false)
     }
-    setCurrentUser(user)
-
-    // Load users data
-    loadUsers()
-    setLoading(false)
   }
 
-  const loadUsers = () => {
-    const allUsers = JSON.parse(localStorage.getItem('users')) || []
-    const regularUsers = allUsers.filter(user => user.role === 'user')
-    setUsers(regularUsers)
+  const loadUsers = async () => {
+    try {
+      // Fetch all users from auth table
+      const { data: { users: authUsers }, error } = await supabase.auth.admin.listUsers()
+      
+      if (error) throw error
+
+      // Filter only regular users (non-admin)
+      const regularUsers = authUsers.filter(user => 
+        user.user_metadata?.role === 'user'
+      ).map(user => ({
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email.split('@')[0],
+        role: user.user_metadata?.role || 'user',
+        created_at: user.created_at
+      }))
+
+      setUsers(regularUsers)
+    } catch (error) {
+      console.error('Error loading users:', error)
+    }
   }
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser')
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
     router.push('/login')
   }
 
@@ -118,7 +156,10 @@ export default function AdminDashboard() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                        <p className="text-sm text-gray-600">ID: {user.id}</p>
+                        <p className="text-sm text-gray-600">{user.email}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Joined: {new Date(user.created_at).toLocaleDateString()}
+                        </p>
                       </div>
                       <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                         <span className="text-blue-600 font-semibold">
@@ -128,7 +169,7 @@ export default function AdminDashboard() {
                     </div>
                     <div className="mt-3">
                       <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                        Active
+                        {user.role}
                       </span>
                     </div>
                   </div>
