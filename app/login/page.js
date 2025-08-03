@@ -118,10 +118,7 @@ export default function LoginPage() {
           </form>
 
           {/* Info */}
-          <div className="mt-6 text-center text-sm text-gray-600">
-            Demo login: <br />
-            <code>admin@canteen.com / admin123</code>
-          </div>
+         
         </div>
 
         <div className="text-center mt-8 text-sm text-gray-500">
