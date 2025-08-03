@@ -2,7 +2,7 @@ export default function PollPage() {
   return (
     <div className="pt-20 pb-24 px-6 text-center">
       <h1 className="text-3xl font-bold text-purple-600 mb-4">Mess Attendance</h1>
-      <p className="text-gray-700 mb-6">Will you be coming for today's meal? Let us know below:</p>
+      <p className="text-gray-700 mb-6">Will you be coming for today&rsquo;s meal? Let us know below:</p>
 
       <form className="space-y-6 max-w-md mx-auto">
         <div className="text-left">

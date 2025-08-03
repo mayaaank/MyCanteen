@@ -47,29 +47,7 @@ export default function AdminDashboard() {
     }
   }
 
-  const loadUsers = async () => {
-    try {
-      // Fetch all users from auth table
-      const { data: { users: authUsers }, error } = await supabase.auth.admin.listUsers()
-      
-      if (error) throw error
-
-      // Filter only regular users (non-admin)
-      const regularUsers = authUsers.filter(user => 
-        user.user_metadata?.role === 'user'
-      ).map(user => ({
-        id: user.id,
-        email: user.email,
-        name: user.user_metadata?.name || user.email.split('@')[0],
-        role: user.user_metadata?.role || 'user',
-        created_at: user.created_at
-      }))
-
-      setUsers(regularUsers)
-    } catch (error) {
-      console.error('Error loading users:', error)
-    }
-  }
+  
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
