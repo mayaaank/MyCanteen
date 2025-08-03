@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Image from 'next/image'
+
 
 const heroImages = [
   '/canteen-1.jpg',
@@ -75,11 +77,15 @@ export default function LandingPage() {
                     {/* Front of Card */}
                     <div className="absolute backface-hidden w-full h-full bg-blue-50 rounded-xl overflow-hidden shadow-md border border-blue-100 flex flex-col items-center justify-center p-4">
                       <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-200 mb-4">
-                        <img 
-                          src={dev.image} 
-                          alt={dev.name}
-                          className="w-full h-full object-cover"
-                        />
+                        <Image
+  src={dev.image}
+  alt={dev.name}
+  className="w-full h-full object-cover"
+  width={500}         // or any default fallback
+  height={500}        // required unless you use `fill`
+  unoptimized         // optional if your images are external and not whitelisted
+/>
+
                       </div>
                       <h3 className="text-xl font-bold text-blue-800">{dev.name}</h3>
                       <p className="text-blue-600">{dev.role}</p>
@@ -134,14 +140,17 @@ export default function LandingPage() {
         <div className="flex-1 flex items-center justify-center w-full">
           <div className="relative w-[390px] h-[265px] md:w-[520px] md:h-[350px] rounded-2xl overflow-hidden shadow-2xl">
             {heroImages.map((src, i) => (
-              <img
-                key={src}
-                src={src}
-                alt={`Canteen scene ${i + 1}`}
-                className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-700 rounded-2xl ${
-                  i === imgIdx ? 'opacity-100 z-10' : 'opacity-0'
-                }`}
-              />
+             <Image
+  key={src}
+  src={src}
+  alt={`Canteen scene ${i + 1}`}
+  className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-700 rounded-2xl ${
+    i === imgIdx ? 'opacity-100 z-10' : 'opacity-0'
+  }`}
+  fill
+  sizes="100vw"
+/>
+
             ))}
           </div>
         </div>

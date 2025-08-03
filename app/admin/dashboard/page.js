@@ -12,8 +12,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkAuthAndLoadData()
-  }, [])
+  const checkAuthAndLoadData = async () => {
+    // your logic here
+  }
+
+  checkAuthAndLoadData()
+}, [])
+
 
   const checkAuthAndLoadData = async () => {
     try {
