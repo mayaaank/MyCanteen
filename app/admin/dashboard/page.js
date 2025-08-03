@@ -12,8 +12,13 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    checkAuthAndLoadData()
-  }, [])
+  const checkAuthAndLoadData = async () => {
+    // your logic here
+  }
+
+  checkAuthAndLoadData()
+}, [])
+
 
   const checkAuthAndLoadData = async () => {
     try {
@@ -47,45 +52,14 @@ export default function AdminDashboard() {
     }
   }
 
-  const loadUsers = async () => {
-    try {
-      // Fetch all users from auth table
-      const { data: { users: authUsers }, error } = await supabase.auth.admin.listUsers()
-      
-      if (error) throw error
-
-      // Filter only regular users (non-admin)
-      const regularUsers = authUsers.filter(user => 
-        user.user_metadata?.role === 'user'
-      ).map(user => ({
-        id: user.id,
-        email: user.email,
-        name: user.user_metadata?.name || user.email.split('@')[0],
-        role: user.user_metadata?.role || 'user',
-        created_at: user.created_at
-      }))
-
-      setUsers(regularUsers)
-    } catch (error) {
-      console.error('Error loading users:', error)
-    }
-  }
+  
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
-      </div>
-    )
-  }
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
