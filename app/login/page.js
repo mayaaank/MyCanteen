@@ -8,39 +8,47 @@ export default function LoginPage() {
   const router = useRouter()
   const supabase = createClientComponentClient()
 
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  })
+
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData((prevData) => ({ ...prevData, [name]: value }))
+  }
 
   const handleLogin = async (e) => {
-  e.preventDefault()
-  setLoading(true)
-  setError('')
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
-  try {
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
 
-    if (authError) throw authError
+      if (authError) throw authError
 
-    const role = data.user?.user_metadata?.role
+      const role = data.user?.user_metadata?.role
+      if (!role) throw new Error('User role not found')
 
-    if (!role) throw new Error('User role not found')
+      // Force a hard refresh to ensure middleware runs
+      window.location.href = role === 'admin'
+        ? '/admin/dashboard'
+        : '/app/dashboard'
 
-    // Force a hard refresh to ensure middleware runs
-    window.location.href = role === 'admin' 
-      ? '/admin/dashboard' 
-      : '/app/dashboard'
-    
-  } catch (error) {
-    setError(error.message)
-  } finally {
-    setLoading(false)
+    } catch (error) {
+      setError(error.message)
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 flex items-center justify-center px-4">
@@ -65,29 +73,39 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} autoComplete="on" className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">Email</label>
               <input
                 type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                name="email"
+                autoComplete="email"
+                value={formData.email}
+                onChange={handleChange}
                 required
-                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter your email"
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+            <div className="relative">
               <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
                 placeholder="Enter your password"
+                required
+                minLength={6}
+                className="w-full text-black px-4 py-3 border rounded-lg pr-20 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-blue-600 font-medium"
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
             </div>
 
             <button
@@ -100,10 +118,7 @@ export default function LoginPage() {
           </form>
 
           {/* Info */}
-          <div className="mt-6 text-center text-sm text-gray-600">
-            Demo login: <br />
-            <code>admin@canteen.com / admin123</code>
-          </div>
+         
         </div>
 
         <div className="text-center mt-8 text-sm text-gray-500">
