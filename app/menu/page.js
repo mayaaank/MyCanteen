@@ -1,8 +1,8 @@
 export default function MenuPage() {
   return (
     <div className="p-6 text-center">
-      <h1 className="text-3xl font-bold text-orange-600 mb-4">Today's Menu</h1>
-      <p className="text-gray-700 mb-6">Check out what’s being served today at the canteen!</p>
+      <h1 className="text-3xl font-bold text-orange-600 mb-4">Today&rsquo;s Menu</h1>
+      <p className="text-gray-700 mb-6">Check out what&rsquo;s being served today at the canteen!</p>
 
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
         <div className="p-4 border rounded-lg shadow hover:shadow-md transition">
