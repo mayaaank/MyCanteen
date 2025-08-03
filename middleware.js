@@ -17,16 +17,15 @@ export async function middleware(req) {
   const role = session.user?.user_metadata?.role
   const pathname = req.nextUrl.pathname
 
+  
   // Admin route protection
   if (pathname.startsWith('/app/admin') && role !== 'admin') {
     return NextResponse.redirect(new URL('/unauthorized', req.url))
   }
-
-  // User route protection
+// User route protection
   if (pathname.startsWith('/app/dashboard') && role !== 'user') {
     return NextResponse.redirect(new URL('/unauthorized', req.url))
   }
-
   return res
 }
 
