@@ -24,7 +24,7 @@ export default function PollPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-blue-50 px-4 py-10">
       <h1 className="text-3xl font-bold text-blue-700 mb-2">Mess Attendance</h1>
       <p className="text-gray-600 text-base mb-6">
-        Kindly confirm your attendance and portion size for today's meal.
+        Kindly confirm your attendance and portion size for today&rsquo;s meal.
       </p>
 
       <form onSubmit={handleSubmit} className="w-full max-w-md space-y-6">

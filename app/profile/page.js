@@ -5,7 +5,7 @@ export default function ProfilePage() {
       <p className="text-gray-700 mb-6">Check your details and meal history.</p>
 
       <div className="max-w-md mx-auto p-4 border rounded shadow">
-        <h2 className="text-xl font-semibold mb-2">👋 Hi, Arvind!</h2>
+        <h2 className="text-xl font-semibold mb-2">👋 Hi, Kanak!</h2>
         <p><strong>Student ID:</strong> 2025CSE001</p>
         <p><strong>Meals Availed:</strong> 14 this month</p>
         <p><strong>Favorite Dish:</strong> Paneer Butter Masala</p>

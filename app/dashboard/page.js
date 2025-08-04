@@ -9,44 +9,39 @@ export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState('home')
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [loading, setLoading] = useState(true)
+  const handleTabClick = (tab, path) => {
+  setActiveTab(tab)
+  if (path) router.push(path)
+}
+
+const handleLogout = async () => {
+  await supabase.auth.signOut()
+  router.push('/login')
+}
 
   useEffect(() => {
-    checkAuth()
-  }, [])
+    const checkAuthAndLoadUser = async () => {
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser()
 
-  const checkAuth = () => {
-    const user = JSON.parse(localStorage.getItem('currentUser'))
-    if (!user) {
-      router.push('/login')
-      return
-    }
-    if (user.role === 'admin') {
-      router.push('/admin/dashboard')
-      return
-    }
-    setCurrentUser(user)
-    setLoading(false)
-  }
+      if (error || !user) {
+        router.push('/login') // unauthenticated
+        return
+      }
 
-  const handleLogout = () => {
-    localStorage.removeItem('currentUser')
-    router.push('/login')
-  }
-
-  const handleTabClick = (tab, route) => {
-    setActiveTab(tab)
-    if (route) {
-      router.push(route)
+      setCurrentUser(user.user_metadata || {})
+      setLoading(false)
     }
-  }
+
+    checkAuthAndLoadUser()
+  }, [router]) // `router` is stable, safe to include
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Loading dashboard...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        Loading...
       </div>
     )
   }
@@ -179,7 +174,7 @@ export default function UserDashboard() {
                       </div>
                       <div className="ml-5 w-0 flex-1">
                         <dl>
-                          <dt className="text-sm font-medium text-gray-500 truncate">Today's Poll</dt>
+                          <dt className="text-sm font-medium text-gray-500 truncate">Today&rsquo;s Poll</dt>
                           <dd className="text-lg font-medium text-gray-900">Not Submitted</dd>
                         </dl>
                       </div>
@@ -217,8 +212,7 @@ export default function UserDashboard() {
                     <div className="text-sm">
                       <button
                         onClick={() => handleTabClick('bills')}
-                        className="font-medium text-green-600 hover:text-green-500"
-                      >
+                        className="font-medium text-green-600 hover:text-green-500">
                         View Bills
                       </button>
                     </div>
