@@ -54,7 +54,7 @@ export default function CreateUser() {
 
   return (
     <div className="max-w-xl mx-auto mt-12 bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-4">Create New User</h2>
+      <h2 className="text-2xl text-black font-bold mb-4">Create New User</h2>
 
       {error && <p className="text-red-600 mb-3">{error}</p>}
       {success && <p className="text-green-600 mb-3">{success}</p>}
@@ -72,12 +72,14 @@ export default function CreateUser() {
         <input
           type="email"
           name="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="Email"
+          autoComplete="email"
+          value={formData.email} // ✅ correct usage
+          onChange={handleChange} // ✅ consistent with other inputs
           required
-          className="w-full text-black px-4 py-2 border rounded"
-        />
+          placeholder="Enter your email"
+          className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
         <input
           type="password"
           name="password"
