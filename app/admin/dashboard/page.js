@@ -15,8 +15,7 @@ export default function AdminDashboard() {
   const checkAuthAndLoadData = async () => {
     // your logic here
   }
-
-  checkAuthAndLoadData()
+    checkAuthAndLoadData()
 }, [])
 
 
