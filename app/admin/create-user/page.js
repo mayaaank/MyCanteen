@@ -4,23 +4,29 @@ import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
-// 🧠 Import server action from local file
+// 🧠 Import your server-side user creation logic
 import { createUserServerAction } from './server'
 
 export default function CreateUser() {
   const router = useRouter()
   const supabase = createClientComponentClient()
 
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' })
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: '',
+    department: '',
+    academicYear: '',
+    contactNumber: '',
+  })
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isPending, startTransition] = useTransition()
 
-  // Role check
+  // ⛔️ Placeholder for admin role check
   useEffect(() => {
-    
-
-    
+    // You can implement admin role enforcement here using session or metadata
   }, [router, supabase])
 
   const handleChange = (e) => {
@@ -35,8 +41,16 @@ export default function CreateUser() {
     setError('')
     setSuccess('')
 
-    if (!formData.name || !formData.email || formData.password.length < 6) {
-      setError('All fields required. Password must be ≥ 6 characters.')
+    if (
+      !formData.name ||
+      !formData.email ||
+      !formData.password ||
+      !formData.department ||
+      !formData.academicYear ||
+      !formData.contactNumber ||
+      formData.password.length < 6
+    ) {
+      setError('All fields are required. Password must be ≥ 6 characters.')
       return
     }
 
@@ -47,57 +61,141 @@ export default function CreateUser() {
         setError(result.error)
       } else {
         setSuccess('User created successfully.')
-        setFormData({ name: '', email: '', password: '' })
+        setFormData({
+          name: '',
+          email: '',
+          password: '',
+          department: '',
+          academicYear: '',
+          contactNumber: '',
+        })
       }
     })
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-12 bg-white p-6 rounded shadow">
-      <h2 className="text-2xl text-black font-bold mb-4">Create New User</h2>
+    <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 flex items-center justify-center px-4">
+      <div className="w-full max-w-md">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2m-6 4h6" />
+            </svg>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900">Create New User</h2>
+        </div>
 
-      {error && <p className="text-red-600 mb-3">{error}</p>}
-      {success && <p className="text-green-600 mb-3">{success}</p>}
+        {/* Form Card */}
+        <div className="bg-white p-8 rounded-2xl shadow-xl border border-gray-100">
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+          {success && (
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mb-4">
+              <p className="text-sm text-green-700">{success}</p>
+            </div>
+          )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          placeholder="Full Name"
-          required
-          className="w-full text-black px-4 py-2 border rounded"
-        />
-        <input
-          type="email"
-          name="email"
-          autoComplete="email"
-          value={formData.email} // ✅ correct usage
-          onChange={handleChange} // ✅ consistent with other inputs
-          required
-          placeholder="Enter your email"
-          className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
+              <input
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                placeholder="Full Name"
+                required
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
 
-        <input
-          type="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="Password"
-          required
-          minLength={6}
-          className="w-full text-black px-4 py-2 border rounded"
-        />
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700"
-        >
-          {isPending ? 'Creating...' : 'Create User'}
-        </button>
-      </form>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                autoComplete="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                required
+                minLength={6}
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Department</label>
+              <input
+                type="text"
+                name="department"
+                value={formData.department}
+                onChange={handleChange}
+                placeholder="e.g. Computer Science"
+                required
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Academic Year</label>
+              <input
+                type="text"
+                name="academicYear"
+                value={formData.academicYear}
+                onChange={handleChange}
+                placeholder="e.g. Second Year"
+                required
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Number</label>
+              <input
+                type="tel"
+                name="contactNumber"
+                value={formData.contactNumber}
+                onChange={handleChange}
+                placeholder="10-digit phone number"
+                required
+                pattern="[0-9]{10}"
+                className="w-full px-4 py-3 text-black border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              {isPending ? 'Creating...' : 'Create User'}
+            </button>
+          </form>
+        </div>
+
+        <div className="text-center mt-8 text-sm text-gray-500">
+          Powered by Swifty9 • PVG Canteen Management
+        </div>
+      </div>
     </div>
   )
 }
