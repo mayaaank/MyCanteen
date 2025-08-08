@@ -23,7 +23,7 @@ export async function middleware(req) {
     return NextResponse.redirect(new URL('/unauthorized', req.url))
   }
 // User route protection
-  if (pathname.startsWith('/app/dashboard') && role !== 'user') {
+  if (pathname.startsWith('/app/user') && role !== 'user') {
     return NextResponse.redirect(new URL('/unauthorized', req.url))
   }
   return res
@@ -32,7 +32,7 @@ export async function middleware(req) {
 export const config = {
   matcher: [
     '/app/admin/:path*',
-    '/app/dashboard/:path*',
+    '/user/dashboard/:path*',
     // Add other protected paths here
   ],
 }
