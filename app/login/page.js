@@ -41,7 +41,7 @@ export default function LoginPage() {
       // Force a hard refresh to ensure middleware runs
       window.location.href = role === 'admin'
         ? '/admin/dashboard'
-        : '/app/dashboard'
+        : '/user/dashboard', console.log('Successful redirection')
 
     } catch (error) {
       setError(error.message)
@@ -49,7 +49,7 @@ export default function LoginPage() {
       setLoading(false)
     }
   }
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md">

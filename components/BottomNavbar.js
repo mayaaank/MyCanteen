@@ -5,10 +5,10 @@ export default function BottomNavbar() {
   return (
     <nav className="fixed bottom-0 w-full bg-white border-t shadow-sm z-50 md:hidden">
       <div className="flex justify-around py-2">
-        <Link href="/">
+        <Link href="/user/dashboard">
           <div className="flex flex-col items-center text-xs">
             <Home size={20} />
-            <span>Home</span>
+            <span>Dashboard</span>
           </div>
         </Link>
         <Link href="/qr">
