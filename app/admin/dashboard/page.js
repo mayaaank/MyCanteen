@@ -11,6 +11,7 @@ export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState(null)
+  const [searchTerm, setSearchTerm] = useState("")
 
   useEffect(() => {
     checkAuthAndLoadData()
@@ -31,6 +32,32 @@ export default function AdminDashboard() {
       setUsers(data)
     } catch (err) {
       console.error("Unexpected error loading users:", err)
+    }
+  }
+
+  const handleSearch = async (value) => {
+    setSearchTerm(value)
+
+    if (!value.trim()) {
+      await loadUsers()
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, role, created_at, contact_number, department, academic_year")
+        .or(`full_name.ilike.%${value}%, email.ilike.%${value}%`)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Search error:", error)
+        return
+      }
+
+      setUsers(data)
+    } catch (err) {
+      console.error("Unexpected error during search:", err)
     }
   }
 
@@ -115,8 +142,16 @@ export default function AdminDashboard() {
 
         {/* Users List */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-lg font-medium text-gray-900">Registered Users</h2>
+            {/* Search Bar */}
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
           
           <div className="p-6">
