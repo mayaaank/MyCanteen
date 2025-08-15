@@ -10,55 +10,67 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([])
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [selectedUser, setSelectedUser] = useState(null)
 
   useEffect(() => {
-  const checkAuthAndLoadData = async () => {
-    // your logic here
-  }
     checkAuthAndLoadData()
-}, [])
+  }, [])
 
-
-  const checkAuthAndLoadData = async () => {
+  const loadUsers = async () => {
     try {
-      // Get current session
-      const { data: { user } } = await supabase.auth.getUser()
-      
-      if (!user) {
-        router.push('/login')
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, role, created_at, contact_number, department, academic_year")
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching users:", error)
         return
       }
 
-      // Verify admin role
-      if (user.user_metadata?.role !== 'admin') {
-        router.push('/unauthorized')
-        return
-      }
-
-      setCurrentUser({
-        id: user.id,
-        email: user.email,
-        name: user.user_metadata?.name || user.email.split('@')[0]
-      })
-
-      // Load users data
-      await loadUsers()
-    } catch (error) {
-      console.error('Error:', error)
-      router.push('/login')
-    } finally {
-      setLoading(false)
+      setUsers(data)
+    } catch (err) {
+      console.error("Unexpected error loading users:", err)
     }
   }
 
-  
+const checkAuthAndLoadData = async () => {
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+
+    if (sessionError || !session) {
+      console.warn('No valid session found. Redirecting to login.')
+      router.push('/login')
+      return
+    }
+
+    const user = session.user
+
+    // Check if user is admin
+    if (user.user_metadata?.role !== 'admin') {
+      router.push('/unauthorized')
+      return
+    }
+
+    setCurrentUser({
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.name || user.email.split('@')[0]
+    })
+
+    await loadUsers()
+  } catch (error) {
+    console.error('Error checking auth:', error)
+    router.push('/login')
+  } finally {
+    setLoading(false)
+  }
+}
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
-
-  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -124,21 +136,18 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {users.map((user) => (
-                  <div key={user.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{user.name}</h3>
-                        <p className="text-sm text-gray-600">{user.email}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          Joined: {new Date(user.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {user.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                {users.map(user => (
+                  <div
+                    key={user.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md cursor-pointer transition-shadow"
+                    onClick={() => setSelectedUser(user)}
+                  >
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{user.full_name || user.email.split("@")[0]}</h3>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Joined: {new Date(user.created_at).toLocaleDateString()}
+                      </p>
                     </div>
                     <div className="mt-3">
                       <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
@@ -150,6 +159,23 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+
+          {selectedUser && (
+            <div className="mt-8 bg-white shadow rounded-lg p-6 border max-w-lg">
+              <h2 className="text-xl font-bold mb-4">{selectedUser.full_name}</h2>
+              <p><strong>Email:</strong> {selectedUser.email}</p>
+              <p><strong>Role:</strong> {selectedUser.role}</p>
+              <p><strong>Contact:</strong> {selectedUser.contact_number || "N/A"}</p>
+              <p><strong>Department:</strong> {selectedUser.department || "N/A"}</p>
+              <p><strong>Academic Year:</strong> {selectedUser.academic_year || "N/A"}</p>
+              <button
+                className="mt-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+                onClick={() => setSelectedUser(null)}
+              >
+                Close
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

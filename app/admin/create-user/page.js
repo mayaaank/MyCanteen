@@ -3,9 +3,7 @@
 import { useState, useEffect, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-
-// 🧠 Import your server-side user creation logic
-import { createUserServerAction } from './server'
+import { createUserServerAction } from './server' // server-side function
 
 export default function CreateUser() {
   const router = useRouter()
@@ -16,17 +14,16 @@ export default function CreateUser() {
     email: '',
     password: '',
     department: '',
-    academicYear: '',
-    contactNumber: '',
+    academic_year: '',
+    contact_number: '',
   })
 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isPending, startTransition] = useTransition()
 
-  // ⛔️ Placeholder for admin role check
   useEffect(() => {
-    // You can implement admin role enforcement here using session or metadata
+    // Optional: Add admin role check here
   }, [router, supabase])
 
   const handleChange = (e) => {
@@ -46,8 +43,8 @@ export default function CreateUser() {
       !formData.email ||
       !formData.password ||
       !formData.department ||
-      !formData.academicYear ||
-      !formData.contactNumber ||
+      !formData.academic_year ||
+      !formData.contact_number ||
       formData.password.length < 6
     ) {
       setError('All fields are required. Password must be ≥ 6 characters.')
@@ -66,8 +63,8 @@ export default function CreateUser() {
           email: '',
           password: '',
           department: '',
-          academicYear: '',
-          contactNumber: '',
+          academic_year: '',
+          contact_number: '',
         })
       }
     })
@@ -101,6 +98,7 @@ export default function CreateUser() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Full Name */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name</label>
               <input
@@ -114,6 +112,7 @@ export default function CreateUser() {
               />
             </div>
 
+            {/* Email */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Email</label>
               <input
@@ -128,6 +127,7 @@ export default function CreateUser() {
               />
             </div>
 
+            {/* Password */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Password</label>
               <input
@@ -142,6 +142,7 @@ export default function CreateUser() {
               />
             </div>
 
+            {/* Department */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Department</label>
               <input
@@ -155,12 +156,13 @@ export default function CreateUser() {
               />
             </div>
 
+            {/* Academic Year */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Academic Year</label>
               <input
                 type="text"
-                name="academicYear"
-                value={formData.academicYear}
+                name="academic_year"
+                value={formData.academic_year}
                 onChange={handleChange}
                 placeholder="e.g. Second Year"
                 required
@@ -168,12 +170,13 @@ export default function CreateUser() {
               />
             </div>
 
+            {/* Contact Number */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1">Contact Number</label>
               <input
                 type="tel"
-                name="contactNumber"
-                value={formData.contactNumber}
+                name="contact_number"
+                value={formData.contact_number}
                 onChange={handleChange}
                 placeholder="10-digit phone number"
                 required
@@ -182,6 +185,7 @@ export default function CreateUser() {
               />
             </div>
 
+            {/* Submit */}
             <button
               type="submit"
               disabled={isPending}

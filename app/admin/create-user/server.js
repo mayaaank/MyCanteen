@@ -1,33 +1,41 @@
 'use server'
 
-import supabaseAdmin from '@/app/utils/supabase-admin'
+import { createClient } from '@supabase/supabase-js'
 
-export async function createUserServerAction({ name, email, password }) {
-  try {
-    // Step 1: Create user in Auth
-    const { data: userData, error } = await supabaseAdmin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-      user_metadata: { role: 'user' }, // ✅ SET role
-    })
+export async function createUserServerAction(formData) {
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+  )
 
-    if (error) return { error: error.message }
+  // 1️⃣ Create in auth.users
+  const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+    email: formData.email,
+    password: formData.password,
+    email_confirm: true,
+    user_metadata: { role: 'user' }
+  })
 
-    // Step 2: Insert into your `users` table
-    const insertResult = await supabaseAdmin.from('users').insert({
-      id: userData.user.id,
-      email,
-      full_name: name,
-      role: 'user'
-    })
-
-    if (insertResult.error) {
-      return { error: insertResult.error.message }
-    }
-
-    return { success: true }
-  } catch (err) {
-    return { error: 'Internal server error' }
+  if (authError) {
+    return { error: `Auth creation failed: ${authError.message}` }
   }
+
+  const authUserId = authUser.user.id
+
+  // 2️⃣ Insert or update into profiles
+  const { error: profileError } = await supabaseAdmin
+    .from('profiles')
+    .upsert({
+      id: authUserId,
+      full_name: formData.name,
+      department: formData.department,
+      academic_year: formData.academic_year,
+      contact_number: formData.contact_number
+    })
+
+  if (profileError) {
+    return { error: `Profile creation failed: ${profileError.message}` }
+  }
+
+  return { success: true }
 }
