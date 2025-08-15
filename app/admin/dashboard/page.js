@@ -34,38 +34,34 @@ export default function AdminDashboard() {
     }
   }
 
-const checkAuthAndLoadData = async () => {
-  try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  const checkAuthAndLoadData = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
 
-    if (sessionError || !session) {
-      console.warn('No valid session found. Redirecting to login.')
+      if (!user) {
+        router.push('/login')
+        return
+      }
+
+      if (user.user_metadata?.role !== 'admin') {
+        router.push('/unauthorized')
+        return
+      }
+
+      setCurrentUser({
+        id: user.id,
+        email: user.email,
+        name: user.user_metadata?.name || user.email.split('@')[0]
+      })
+
+      await loadUsers()
+    } catch (error) {
+      console.error('Error:', error)
       router.push('/login')
-      return
+    } finally {
+      setLoading(false)
     }
-
-    const user = session.user
-
-    // Check if user is admin
-    if (user.user_metadata?.role !== 'admin') {
-      router.push('/unauthorized')
-      return
-    }
-
-    setCurrentUser({
-      id: user.id,
-      email: user.email,
-      name: user.user_metadata?.name || user.email.split('@')[0]
-    })
-
-    await loadUsers()
-  } catch (error) {
-    console.error('Error checking auth:', error)
-    router.push('/login')
-  } finally {
-    setLoading(false)
   }
-}
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
