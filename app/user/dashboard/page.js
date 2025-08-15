@@ -39,7 +39,7 @@ export default function UserDashboard() {
     }
 
     checkAuth()
-  }, [])
+  }, [roter,supabase.auth])
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -89,7 +89,7 @@ export default function UserDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 p-4 rounded-lg text-center shadow hover:shadow-md transition">
             <h4 className="text-lg font-bold text-blue-700">Check Menu</h4>
-            <p className="text-sm text-blue-600 mt-2">View today's and upcoming meals.</p>
+            <p className="text-sm text-blue-600 mt-2">View today&apos;s and upcoming meals.</p>
           </div>
           <div className="bg-green-50 p-4 rounded-lg text-center shadow hover:shadow-md transition">
             <h4 className="text-lg font-bold text-green-700">View Attendance</h4>
@@ -97,7 +97,7 @@ export default function UserDashboard() {
           </div>
           <div className="bg-yellow-50 p-4 rounded-lg text-center shadow hover:shadow-md transition">
             <h4 className="text-lg font-bold text-yellow-700">Vote in Polls</h4>
-            <p className="text-sm text-yellow-600 mt-2">Vote for tomorrow's menu.</p>
+            <p className="text-sm text-yellow-600 mt-2">Vote for tomorrow&apos;s menu.</p>
           </div>
         </div>
       </main>
