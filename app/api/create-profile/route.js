@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/lib/supabase";  // service role client
 export async function POST(req) {
   try {
     const body = await req.json();
-    const { email, password, name, dept, year, phone } = body;
+    const { email, password, name, dept, year, phone, role } = body;
 
     // 1. Create user in Auth
     const { data: authUser, error: authError } =
@@ -27,6 +27,7 @@ export async function POST(req) {
           dept: dept || null,
           year: year || null,
           phone: phone || null,
+         role: role || "user",
         },
       ]);
 
@@ -38,4 +39,3 @@ export async function POST(req) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
-
