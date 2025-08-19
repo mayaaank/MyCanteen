@@ -40,7 +40,7 @@ export default function CreateUser() {
         .eq('email', email)
         .maybeSingle()
       
-      if (error) throw error
+      if (error) throw error 
       return !!data
     } catch (err) {
       console.error('Email check error:', err)

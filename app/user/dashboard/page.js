@@ -14,13 +14,23 @@ export default function UserDashboard() {
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-
         if (!user) {
           router.push('/login')
           return
         }
 
-        if (user.user_metadata?.role !== 'user') {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role, full_name')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (error || !profile) {
+          router.push('/unauthorized')  // 🔄 better than pushing to login
+          return
+        }
+
+        if (profile.role !== 'user') {
           router.push('/unauthorized')
           return
         }
@@ -28,7 +38,7 @@ export default function UserDashboard() {
         setCurrentUser({
           id: user.id,
           email: user.email,
-          name: user.user_metadata?.name || user.email.split('@')[0],
+          name: profile.full_name || user.email.split('@')[0],
         })
       } catch (err) {
         console.error('Error fetching user:', err)
@@ -39,7 +49,7 @@ export default function UserDashboard() {
     }
 
     checkAuth()
-  }, [router,supabase.auth])
+  }, [router])  // ✅ only depend on router
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -104,4 +114,3 @@ export default function UserDashboard() {
     </div>
   )
 }
-

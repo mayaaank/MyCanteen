@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabase";  // service role client
+import { supabaseAdmin } from "@/lib/supabase"; // service role client
 
 export async function POST(req) {
   try {
@@ -27,7 +27,7 @@ export async function POST(req) {
           dept: dept || null,
           year: year || null,
           phone: phone || null,
-         role: role || "user",
+          role: role || "user", // default role set here
         },
       ]);
 
