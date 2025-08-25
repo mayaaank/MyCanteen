@@ -12,8 +12,9 @@ export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState(null)
-  const [search, setSearch] = useState("")
-  const [error, setError] = useState(null)
+
+  const [searchTerm, setSearchTerm] = useState("")
+
 
   useEffect(() => {
     checkAuthAndLoadData()
@@ -36,8 +37,37 @@ export default function AdminDashboard() {
       setUsers([])
     }
   }
-
   // Admin auth & load users
+
+  const handleSearch = async (value) => {
+    setSearchTerm(value)
+
+    if (!value.trim()) {
+      await loadUsers()
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, email, full_name, role, created_at, contact_number, department, academic_year")
+        .or(`full_name.ilike.%${value}%, email.ilike.%${value}%`)
+        .order("created_at", { ascending: false })
+
+      if (error) {
+        console.error("Search error:", error)
+
+        return
+      }
+
+      setUsers(data)
+    } catch (err) {
+
+      console.error("Unexpected error during search:", err)
+
+    }
+  }
+
   const checkAuthAndLoadData = async () => {
     try {
       setLoading(true)
@@ -140,47 +170,56 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Search */}
-        <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search by User ID or Name"
-            className="border border-gray-300 p-2 rounded w-full md:w-64"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* User Table */}
-        <div className="relative overflow-x-auto shadow-md sm:rounded-lg bg-white">
-          <table className="w-full text-sm text-left text-gray-500">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50">
-              <tr>
-                <th scope="col" className="px-6 py-3">User ID</th>
-                <th scope="col" className="px-6 py-3">Name</th>
-                <th scope="col" className="px-6 py-3">Last Poll</th>
-                <th scope="col" className="px-6 py-3"><span className="sr-only">Actions</span></th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id} className="bg-white border-b border-gray-200 hover:bg-gray-50">
-                  <th className="px-6 py-4 font-medium text-gray-900">{user.user_id}</th>
-                  <td className="px-6 py-4">{user.full_name || "-"}</td>
-                  <td className="px-6 py-4">{user.last_poll_at ? new Date(user.last_poll_at).toLocaleString() : 'N/A'}</td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => setSelectedUser(user)}
-                      className="font-medium text-blue-600 hover:underline"
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        {/* Users List */}
+        <div className="bg-white rounded-lg shadow">
+          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 className="text-lg font-medium text-gray-900">Registered Users</h2>
+            {/* Search Bar */}
+            <input
+              type="text"
+              placeholder="Search users..."
+              value={searchTerm}
+              onChange={(e) => handleSearch(e.target.value)}
+              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div className="p-6">
+            {users.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-500">No users registered yet.</p>
+                <button
+                  onClick={() => router.push('/admin/create-user')}
+                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Create First User
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {users.map(user => (
+                  <div
+                    key={user.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md cursor-pointer transition-shadow"
+                    onClick={() => setSelectedUser(user)}
+                  >
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{user.full_name || user.email.split("@")[0]}</h3>
+                      <p className="text-sm text-gray-600">{user.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Joined: {new Date(user.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="mt-3">
+                      <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
+                        {user.role}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
         {/* View/Edit Card */}
         {selectedUser && (
