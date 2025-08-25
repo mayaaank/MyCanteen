@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useEffect, useState, useCallback } from "react";
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -14,18 +14,14 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null)
 
   const [searchTerm, setSearchTerm] = useState("")
-
-
-  useEffect(() => {
-    checkAuthAndLoadData()
-  }, [])
+  const [error, setError] = useState(null)
 
   // Fetch users from Supabase profiles table
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("profiles")
-        .select("id, user_id, full_name, email, contact_number, department, academic_year, role, last_poll_at")
+        .select("id, user_id, full_name, email, contact_number, department, academic_year, role, last_poll_at, created_at")
         .neq('role', 'admin')
         .order("created_at", { ascending: false })
 
@@ -36,8 +32,7 @@ export default function AdminDashboard() {
       setError(err.message || 'Failed to load users')
       setUsers([])
     }
-  }
-  // Admin auth & load users
+  }, [supabase])  // ✅ supabase added
 
   const handleSearch = async (value) => {
     setSearchTerm(value)
@@ -56,50 +51,50 @@ export default function AdminDashboard() {
 
       if (error) {
         console.error("Search error:", error)
-
         return
       }
 
       setUsers(data)
     } catch (err) {
-
       console.error("Unexpected error during search:", err)
-
     }
   }
 
-  const checkAuthAndLoadData = async () => {
+  const checkAuthAndLoadData = useCallback(async () => {
     try {
-      setLoading(true)
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) throw new Error('Please login')
+      setLoading(true);
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) throw new Error('Please login');
 
       const { data: profile } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
-        .maybeSingle()
+        .maybeSingle();
 
-      if (!profile) throw new Error('Profile not found')
-
-      if (profile.role !== 'admin') throw new Error('Admin access required')
+      if (!profile) throw new Error('Profile not found');
+      if (profile.role !== 'admin') throw new Error('Admin access required');
 
       setCurrentUser({ 
         id: session.user.id, 
         email: session.user.email, 
         name: profile.full_name, 
         role: profile.role 
-      })
+      });
 
-      await loadUsers()
+      await loadUsers();
     } catch (err) {
-      console.error(err)
-      setError(err.message)
-      if (!err.message.includes('profile')) router.push('/login')
+      console.error(err);
+      setError(err.message);
+      if (!err.message.includes('profile')) router.push('/login');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  }, [router, loadUsers, supabase]);  // ✅ supabase added
+
+  useEffect(() => {
+    checkAuthAndLoadData();
+  }, [checkAuthAndLoadData]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
@@ -108,8 +103,8 @@ export default function AdminDashboard() {
 
   // Filter users based on search input
   const filteredUsers = users.filter(user =>
-    user.user_id?.toLowerCase().includes(search.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(search.toLowerCase())
+    user.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
   )
 
   if (loading) return (
@@ -197,7 +192,8 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {users.map(user => (
+                {filteredUsers.map(user => (
+
                   <div
                     key={user.id}
                     className="border border-gray-200 rounded-lg p-4 hover:shadow-md cursor-pointer transition-shadow"
@@ -221,37 +217,38 @@ export default function AdminDashboard() {
             )}
           </div>
 
-        {/* View/Edit Card */}
-        {selectedUser && (
-          <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md p-6 bg-white rounded-lg shadow-lg border">
-            <button 
-              onClick={() => setSelectedUser(null)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            {/* View/Edit Card */}
+      {selectedUser && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md p-6 bg-white rounded-lg shadow-lg border">
+          <button 
+            onClick={() => setSelectedUser(null)}
+            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+          <h2 className="text-xl font-bold mb-2">{selectedUser.full_name}</h2>
+          <p><strong>Email:</strong> {selectedUser.email}</p>
+          <p><strong>Contact:</strong> {selectedUser.contact_number || 'N/A'}</p>
+          <p><strong>Department:</strong> {selectedUser.department || 'N/A'}</p>
+          <p><strong>Year:</strong> {selectedUser.academic_year || 'N/A'}</p>
+          <p><strong>Last Poll:</strong> {selectedUser.last_poll_at ? new Date(selectedUser.last_poll_at).toLocaleString() : 'N/A'}</p>
+          <div className="mt-4 flex justify-end gap-2">
+            <button
+              onClick={() => router.push(`/admin/edit-user/${selectedUser.id}`)}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
-              ✕
+              Edit
             </button>
-            <h2 className="text-xl font-bold mb-2">{selectedUser.full_name}</h2>
-            <p><strong>Email:</strong> {selectedUser.email}</p>
-            <p><strong>Contact:</strong> {selectedUser.contact_number || 'N/A'}</p>
-            <p><strong>Department:</strong> {selectedUser.department || 'N/A'}</p>
-            <p><strong>Year:</strong> {selectedUser.academic_year || 'N/A'}</p>
-            <p><strong>Last Poll:</strong> {selectedUser.last_poll_at ? new Date(selectedUser.last_poll_at).toLocaleString() : 'N/A'}</p>
-            <div className="mt-4 flex justify-end gap-2">
-              <button
-                onClick={() => router.push(`/admin/edit-user/${selectedUser.id}`)}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => setSelectedUser(null)}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-              >
-                Close
-              </button>
-            </div>
+            <button
+              onClick={() => setSelectedUser(null)}
+              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+            >
+              Close
+            </button>
           </div>
-        )}
+        </div>
+      )}
+    </div>
 
       </main>
     </div>
