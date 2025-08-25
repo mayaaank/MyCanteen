@@ -23,32 +23,44 @@ export default function LoginPage() {
   }
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+  e.preventDefault()
+  setLoading(true)
+  setError('')
 
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      })
+  try {
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    })
 
-      if (authError) throw authError
+    if (authError) throw authError
+    const user = data.user
+    if (!user) throw new Error("Login failed: no user")
 
-      const role = data.user?.user_metadata?.role
-      if (!role) throw new Error('User role not found')
+    // ✅ Fetch role from profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
 
-      // Force a hard refresh to ensure middleware runs
-      window.location.href = role === 'admin'
-        ? '/admin/dashboard'
-        : '/user/dashboard', console.log('Successful redirection')
+    if (profileError) throw profileError
+    if (!profile || !profile.role) throw new Error("User role not found")
 
-    } catch (error) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
+    // Redirect based on role
+    if (profile.role === 'admin') {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/user/dashboard')
     }
+
+  } catch (error) {
+    setError(error.message)
+  } finally {
+    setLoading(false)
   }
+}
+
  
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 via-white to-blue-50 flex items-center justify-center px-4">

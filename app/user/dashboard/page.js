@@ -11,43 +11,45 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    let isMounted = true // ✅ prevents state updates if unmounted
-
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
-
         if (!user) {
           router.push('/login')
           return
         }
 
-        if (user.user_metadata?.role !== 'user') {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('role, full_name')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (error || !profile) {
+          router.push('/unauthorized')  // 🔄 better than pushing to login
+          return
+        }
+
+        if (profile.role !== 'user') {
           router.push('/unauthorized')
           return
         }
 
-        if (isMounted) {
-          setCurrentUser({
-            id: user.id,
-            email: user.email,
-            name: user.user_metadata?.name || user.email.split('@')[0],
-          })
-        }
+        setCurrentUser({
+          id: user.id,
+          email: user.email,
+          name: profile.full_name || user.email.split('@')[0],
+        })
       } catch (err) {
         console.error('Error fetching user:', err)
         router.push('/login')
       } finally {
-        if (isMounted) setLoading(false)
+        setLoading(false)
       }
     }
 
     checkAuth()
-
-    return () => {
-      isMounted = false
-    }
-  }, [router, supabase]) // ✅ correct dependencies
+  }, [router])  // ✅ only depend on router
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
