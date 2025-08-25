@@ -13,6 +13,7 @@ export default function AdminDashboard() {
   const [selectedUser, setSelectedUser] = useState(null)
   const [searchTerm, setSearchTerm] = useState("")
 
+
   useEffect(() => {
     checkAuthAndLoadData()
   }, [])
@@ -52,12 +53,15 @@ export default function AdminDashboard() {
 
       if (error) {
         console.error("Search error:", error)
+
         return
       }
 
       setUsers(data)
     } catch (err) {
+
       console.error("Unexpected error during search:", err)
+
     }
   }
 

@@ -11,6 +11,8 @@ export default function UserDashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    let isMounted = true // ✅ prevents state updates if unmounted
+
     const checkAuth = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser()
@@ -25,21 +27,27 @@ export default function UserDashboard() {
           return
         }
 
-        setCurrentUser({
-          id: user.id,
-          email: user.email,
-          name: user.user_metadata?.name || user.email.split('@')[0],
-        })
+        if (isMounted) {
+          setCurrentUser({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.name || user.email.split('@')[0],
+          })
+        }
       } catch (err) {
         console.error('Error fetching user:', err)
         router.push('/login')
       } finally {
-        setLoading(false)
+        if (isMounted) setLoading(false)
       }
     }
 
     checkAuth()
-  }, [router, supabase]) // ✅ Proper dependency array
+
+    return () => {
+      isMounted = false
+    }
+  }, [router, supabase]) // ✅ correct dependencies
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
