@@ -177,15 +177,15 @@ export default function LandingPage() {
                 </button>
               </div>
 
-              {/* Trust Indicators */}
+              {/* Trust Indicators
               <div className="flex items-center gap-8 pt-8 border-t border-gray-100">
                 <div className="text-sm text-gray-600">Trusted by leading institutions</div>
                 <div className="flex items-center gap-4 opacity-60">
-                  <div className="px-3 py-1 bg-gray-100 rounded text-xs font-medium">IIT</div>
+                  <div className="px-3 py-1 bg-gray-100 rounded text-xs font-medium">PVG COE</div>
                   <div className="px-3 py-1 bg-gray-100 rounded text-xs font-medium">NIT</div>
                   <div className="px-3 py-1 bg-gray-100 rounded text-xs font-medium">Universities</div>
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Right Visual */}
@@ -202,21 +202,21 @@ export default function LandingPage() {
                         <div className="font-medium text-gray-900">Rahul Sharma</div>
                         <div className="text-sm text-gray-600">Roll: CS101</div>
                       </div>
-                      <div className="text-blue-700 font-semibold">Full Meal</div>
+                      <div className="text-green-600 font-semibold">Full Meal</div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div>
                         <div className="font-medium text-gray-900">Priya Patel</div>
-                        <div className="text-sm text-gray-600">Roll: ME205</div>
+                        <div className="text-sm text-gray-450">Roll: ME205</div>
                       </div>
-                      <div className="text-orange-600 font-semibold">Half Meal</div>
+                      <div className="text-yellow-500 font-semibold">Half Meal</div>
                     </div>
                     <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
                       <div>
                         <div className="font-medium text-gray-900">Amit Kumar</div>
                         <div className="text-sm text-gray-600">Roll: EC303</div>
                       </div>
-                      <div className="text-blue-700 font-semibold">Full Meal</div>
+                      <div className="text-green-600 font-semibold">Full Meal</div>
                     </div>
                   </div>
                   <div className="pt-4 border-t border-gray-100">
