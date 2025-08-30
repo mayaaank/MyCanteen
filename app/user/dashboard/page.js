@@ -259,7 +259,7 @@ export default function UserDashboard() {
         {/* Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-blue-50 p-6 rounded-lg text-center shadow hover:shadow-md transition">
-            <h4 className="text-lg font-bold text-blue-700">Today's Menu</h4>
+            <h4 className="text-lg font-bold text-blue-700">Today&apos;s Menu</h4>
             <p className="text-sm text-blue-600 mt-2">View current and upcoming meals</p>
           </div>
 
@@ -281,7 +281,7 @@ export default function UserDashboard() {
         <div className="mt-8 bg-white rounded-lg shadow p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Info</h3>
           <div className="space-y-2 text-sm text-gray-600">
-            <p>• Poll voting is for tomorrow's meals</p>
+            <p>• Poll voting is for tomorrow&apos;s meals</p>
             <p>• You can change your vote until the admin confirms</p>
             <p>• Full meal: ₹60 | Half meal: ₹45</p>
             <p>• Lunch voting closes at 2 PM, Dinner at 6 PM</p>
@@ -294,7 +294,7 @@ export default function UserDashboard() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => !pollLoading && setPollOpen(false)} />
           <div className="relative bg-white w-full max-w-md rounded-lg shadow-lg p-6 z-10">
-            <h3 className="text-lg font-semibold mb-4">Vote for Tomorrow's Meal</h3>
+            <h3 className="text-lg font-semibold mb-4">Vote for Tomorrow&apos;s Meal</h3>
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Session</label>
