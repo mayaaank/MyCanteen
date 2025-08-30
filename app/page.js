@@ -46,6 +46,16 @@ export default function LandingPage() {
   const [imgIdx, setImgIdx] = useState(0)
   const [showDevelopers, setShowDevelopers] = useState(false)
 
+  // ✅ Session check for redirect
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data } = await supabase.auth.getSession()
+      const session = data.session
+      
+    }
+    
+  }, [router])
+
   // Slideshow logic
   useEffect(() => {
     const interval = setInterval(() => {
@@ -131,12 +141,26 @@ export default function LandingPage() {
           <p className="mb-6 text-gray-700 text-lg md:text-xl">
             mycanteen brings everyone to the table. Enjoy seamless meal tracking and community dining every day.
           </p>
-          <button
-            onClick={() => router.push('/login')}
-            className="bg-blue-700 text-white px-8 py-3 rounded-full font-semibold text-lg shadow hover:bg-blue-800 transition"
-          >
-            Get Started
-          </button>
+         <button
+  onClick={async () => {
+    const { data } = await supabase.auth.getSession()
+    const session = data.session
+    if (session) {
+      const role = session.user?.user_metadata?.role
+      if (role === 'admin') {
+        router.push('/admin/dashboard')
+      } else {
+        router.push('/user/dashboard')
+      }
+    } else {
+      router.push('/login')
+    }
+  }}
+  className="bg-blue-700 text-white px-8 py-3 rounded-full font-semibold text-lg shadow hover:bg-blue-800 transition"
+>
+  Get Started
+</button>
+
         </div>
 
         {/* Right column: Larger Slideshow */}

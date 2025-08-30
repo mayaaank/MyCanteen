@@ -12,7 +12,9 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([])
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
+
   const [selectedUser, setSelectedUser] = useState(null) // for modal
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -31,6 +33,7 @@ export default function AdminDashboard() {
       }
       setLoading(false)
     }
+
     // inside AdminDashboard component
 const handleCreateUser = async (formData) => {
   try {
@@ -45,6 +48,7 @@ const handleCreateUser = async (formData) => {
         year: formData.year,
         phone: formData.phone,
         role: formData.role || 'user'     // default role user
+
       })
     })
 
@@ -91,6 +95,7 @@ const handleCreateUser = async (formData) => {
         </div>
       </div>
 
+
       {/* Total Users */}
       <div className="bg-gray-100 rounded-xl p-4 shadow mb-6 text-center">
         <h2 className="text-lg font-semibold">Total Users</h2>
@@ -131,6 +136,7 @@ const handleCreateUser = async (formData) => {
           </tbody>
         </table>
       </div>
+
 
       {/* Modal for User Details */}
       {selectedUser && (
