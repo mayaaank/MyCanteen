@@ -1,8 +1,8 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
-import BottomNavbar from '@/components/BottomNavbar'
-import Navbar from '@/components/Navbar'
+
+
 import './globals.css'
 
 export default function RootLayout({ children }) {
@@ -24,7 +24,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className="scroll-smooth">
       <body className="min-h-screen flex flex-col">
         <main className="flex-grow pb-20">{children}</main>
-        {showBottomBar && <BottomNavbar />}
+        
       </body>
     </html>
   )

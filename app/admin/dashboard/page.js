@@ -2,7 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useEffect, useState, useCallback } from "react";
+import { useState, useEffect } from 'react';
+import { UserPlus, LogOut, Eye } from 'lucide-react'
+
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -13,244 +15,154 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const [selectedUser, setSelectedUser] = useState(null)
 
-  const [searchTerm, setSearchTerm] = useState("")
-  const [error, setError] = useState(null)
 
-  // Fetch users from Supabase profiles table
-  const loadUsers = useCallback(async () => {
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, user_id, full_name, email, contact_number, department, academic_year, role, last_poll_at, created_at")
-        .neq('role', 'admin')
-        .order("created_at", { ascending: false })
-
-      if (error) throw error
-      setUsers(data || [])
-    } catch (err) {
-      console.error("Error loading users:", err)
-      setError(err.message || 'Failed to load users')
-      setUsers([])
-    }
-  }, [supabase])  // ✅ supabase added
-
-  const handleSearch = async (value) => {
-    setSearchTerm(value)
-
-    if (!value.trim()) {
-      await loadUsers()
-      return
-    }
-
-    try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, email, full_name, role, created_at, contact_number, department, academic_year")
-        .or(`full_name.ilike.%${value}%, email.ilike.%${value}%`)
-        .order("created_at", { ascending: false })
-
-      if (error) {
-        console.error("Search error:", error)
-        return
-      }
-
-      setUsers(data)
-    } catch (err) {
-      console.error("Unexpected error during search:", err)
-    }
-  }
-
-  const checkAuthAndLoadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-      if (sessionError || !session) throw new Error('Please login');
-
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (!profile) throw new Error('Profile not found');
-      if (profile.role !== 'admin') throw new Error('Admin access required');
-
-      setCurrentUser({ 
-        id: session.user.id, 
-        email: session.user.email, 
-        name: profile.full_name, 
-        role: profile.role 
-      });
-
-      await loadUsers();
-    } catch (err) {
-      console.error(err);
-      setError(err.message);
-      if (!err.message.includes('profile')) router.push('/login');
-    } finally {
-      setLoading(false);
-    }
-  }, [router, loadUsers, supabase]);  // ✅ supabase added
-
-  useEffect(() => {
-    checkAuthAndLoadData();
-  }, [checkAuthAndLoadData]);
+  // Logout handler
 
   const handleLogout = async () => {
     await supabase.auth.signOut()
     router.push('/login')
   }
 
-  // Filter users based on search input
-  const filteredUsers = users.filter(user =>
-    user.user_id?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  // Create user handler
+ 
+  const handleCreateUser = async (formData) => {
+    try {
+      const res = await fetch('/api/create-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.full_name,
+          dept: formData.dept,
+          year: formData.year,
+          phone: formData.phone,
+          role: formData.role || 'user'
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alert('✅ User created successfully')
+      } else {
+        alert(`❌ Error: ${data.error}`)
+      }
+    } catch (err) {
+      console.error('Error creating user:', err)
+    }
+  }
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-    </div>
-  )
+  // Initial data fetch
+ 
+  useEffect(() => {
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) {
+        router.push('/login')
 
-  if (error) return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-        <p className="text-red-500 mb-4">{error}</p>
-        <div className="flex justify-center gap-2">
-          <button onClick={() => window.location.reload()} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Try Again</button>
-          <button onClick={handleLogout} className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">Login Page</button>
-        </div>
-      </div>
-    </div>
-  )
+        return
+      }
+      setCurrentUser(user)
+
+
+      const { data, error } = await supabase.from('profiles_new').select('*')
+      if (error) {
+        console.error('Error fetching profiles_new:', error.message)
+      } else {
+        setUsers(data)
+      }
+      setLoading(false)
+    }
+
+    fetchData()
+  }, [router, supabase])
+
+  if (loading) return <p className="p-4">Loading...</p>
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="p-4 max-w-5xl mx-auto">
       {/* Header */}
-      <header className="bg-white shadow border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between h-16 items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <p className="text-sm text-gray-600">Welcome, {currentUser?.name}</p>
-          </div>
-          <div className="flex gap-4">
-            <button 
-              onClick={() => router.push('/admin/create-user')} 
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-            >
-              Add User
-            </button>
-            <button 
-              onClick={handleLogout} 
-              className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Total Users</h3>
-            <p className="text-3xl font-bold text-blue-600 mt-2">{users.length}</p>
-          </div>
-          <div className="bg-white p-6 rounded-lg shadow">
-            <h3 className="text-lg font-semibold text-gray-900">Active Users</h3>
-            {/* Placeholder: all users considered active for now */}
-            <p className="text-3xl font-bold text-green-600 mt-2">{users.length}</p>
-          </div>
-        </div>
-
-        {/* Users List */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-lg font-medium text-gray-900">Registered Users</h2>
-            {/* Search Bar */}
-            <input
-              type="text"
-              placeholder="Search users..."
-              value={searchTerm}
-              onChange={(e) => handleSearch(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div className="p-6">
-            {users.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">No users registered yet.</p>
-                <button
-                  onClick={() => router.push('/admin/create-user')}
-                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
-                >
-                  Create First User
-                </button>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredUsers.map(user => (
-
-                  <div
-                    key={user.id}
-                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md cursor-pointer transition-shadow"
-                    onClick={() => setSelectedUser(user)}
-                  >
-                    <div>
-                      <h3 className="font-semibold text-gray-900">{user.full_name || user.email.split("@")[0]}</h3>
-                      <p className="text-sm text-gray-600">{user.email}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Joined: {new Date(user.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="mt-3">
-                      <span className="inline-block bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                        {user.role}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-            {/* View/Edit Card */}
-      {selectedUser && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md p-6 bg-white rounded-lg shadow-lg border">
-          <button 
-            onClick={() => setSelectedUser(null)}
-            className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
+        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+        <div className="flex gap-3">
+          <button
+            onClick={() => router.push('/admin/create-user')}
+            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
           >
-            ✕
+            <UserPlus size={18} /> Create User
           </button>
-          <h2 className="text-xl font-bold mb-2">{selectedUser.full_name}</h2>
-          <p><strong>Email:</strong> {selectedUser.email}</p>
-          <p><strong>Contact:</strong> {selectedUser.contact_number || 'N/A'}</p>
-          <p><strong>Department:</strong> {selectedUser.department || 'N/A'}</p>
-          <p><strong>Year:</strong> {selectedUser.academic_year || 'N/A'}</p>
-          <p><strong>Last Poll:</strong> {selectedUser.last_poll_at ? new Date(selectedUser.last_poll_at).toLocaleString() : 'N/A'}</p>
-          <div className="mt-4 flex justify-end gap-2">
-            <button
-              onClick={() => router.push(`/admin/edit-user/${selectedUser.id}`)}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Edit
-            </button>
-            <button
-              onClick={() => setSelectedUser(null)}
-              className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
-            >
-              Close
-            </button>
+          <button
+            onClick={handleLogout}
+            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition"
+          >
+            <LogOut size={18} /> Logout
+          </button>
+        </div>
+      </div>
+
+      {/* Total Users */}
+      <div className="bg-gray-100 rounded-xl p-4 shadow mb-6 text-center">
+        <h2 className="text-lg font-semibold">Total Users</h2>
+        <p className="text-2xl font-bold">{users.length}</p>
+      </div>
+
+      {/* Users Table */}
+      <div className="overflow-x-auto">
+        <table className="w-full border rounded-lg shadow-sm text-sm sm:text-base">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">ID</th>
+              <th className="border p-2">Name</th>
+              <th className="border p-2">Email</th>
+              <th className="border p-2">Phone</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((u) => (
+              <tr key={u.id} className="hover:bg-gray-50">
+                <td className="border p-2">{u.id}</td>
+                <td className="border p-2">{u.name}</td>
+                <td className="border p-2">{u.email}</td>
+                <td className="border p-2">{u.phone}</td>
+                <td className="border p-2">{u.role}</td>
+                <td className="border p-2 text-center">
+                  <button
+                    onClick={() => setSelectedUser(u)}
+                    className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1 rounded-lg shadow hover:bg-indigo-700 transition mx-auto"
+
+                  >
+                    <Eye size={16} /> View
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Modal for User Details */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
+            <h2 className="text-xl font-bold mb-4">User Details</h2>
+            <p><span className="font-semibold">ID:</span> {selectedUser.id}</p>
+            <p><span className="font-semibold">Name:</span> {selectedUser.name}</p>
+            <p><span className="font-semibold">Email:</span> {selectedUser.email}</p>
+            <p><span className="font-semibold">Phone:</span> {selectedUser.phone}</p>
+            <p><span className="font-semibold">Role:</span> {selectedUser.role}</p>
+            <div className="mt-4 text-right">
+              <button
+                onClick={() => setSelectedUser(null)}
+                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
-    </div>
 
-      </main>
     </div>
   )
 }

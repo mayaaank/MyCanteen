@@ -39,7 +39,7 @@ export default function LoginPage() {
 
     // ✅ Fetch role from profiles table
     const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+      .from('profiles_new')
       .select('role')
       .eq('id', user.id)
       .single()
