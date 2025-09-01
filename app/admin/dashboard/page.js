@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+
 import { UserPlus, LogOut, Eye } from 'lucide-react'
+
 
 export default function AdminDashboard() {
   const router = useRouter()
@@ -13,6 +14,7 @@ export default function AdminDashboard() {
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
+
   const [selectedUser, setSelectedUser] = useState(null) // for modal
 
 
@@ -21,9 +23,11 @@ export default function AdminDashboard() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) {
         router.push('/login')
+
         return
       }
       setCurrentUser(user)
+
 
       const { data, error } = await supabase.from('profiles_new').select('*')
       if (error) {
@@ -72,6 +76,7 @@ const handleCreateUser = async (formData) => {
     router.push('/login')
   }
 
+
   if (loading) return <p className="p-4">Loading...</p>
 
   return (
@@ -94,6 +99,7 @@ const handleCreateUser = async (formData) => {
           </button>
         </div>
       </div>
+
 
 
       {/* Total Users */}
@@ -127,6 +133,7 @@ const handleCreateUser = async (formData) => {
                   <button
                     onClick={() => setSelectedUser(u)}
                     className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1 rounded-lg shadow hover:bg-indigo-700 transition mx-auto"
+
                   >
                     <Eye size={16} /> View
                   </button>
@@ -136,6 +143,7 @@ const handleCreateUser = async (formData) => {
           </tbody>
         </table>
       </div>
+
 
 
       {/* Modal for User Details */}
@@ -159,6 +167,7 @@ const handleCreateUser = async (formData) => {
           </div>
         </div>
       )}
+
     </div>
   )
 }
