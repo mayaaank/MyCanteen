@@ -32,7 +32,7 @@ async function generateSMCUserId(year) {
 export async function POST(req) {
   try {
     const body = await req.json()
-    const { email, password, full_name, dept, year, contact_number, role } = body
+    const { email, password, full_name, dept, year, contact_number } = body
 
     // 1️⃣ Required fields check
     if (!email || !password || !full_name) {
@@ -55,7 +55,7 @@ export async function POST(req) {
       email,
       password,
       email_confirm: true,          // ✅ correct key
-      user_metadata: { role: role || 'user' }
+      user_metadata: { role: 'user '}
     })
     if (authError) throw authError
 
@@ -73,7 +73,7 @@ export async function POST(req) {
       department: dept || null,
       academic_year: year || null,
       contact_number: contact_number || null,
-      role: role || 'user',
+      role: 'user',
       total_bill: '0',
       last_poll_at: null,
       onboarding_complete: false,
@@ -93,7 +93,7 @@ export async function POST(req) {
       user_id,
       email,
       full_name,
-      role: role || 'user'
+      role:'user'
     })
   } catch (err) {
     console.error('❌ API Error:', err)

@@ -113,16 +113,7 @@ export default function CreateUserPage() {
           className="w-full p-2 border rounded"
         />
 
-        <select
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="w-full p-2 border rounded"
-        >
-          <option value="user">User</option>
-          <option value="admin">Admin</option>
-        </select>
-
+      
         <button
           type="submit"
           disabled={loading}

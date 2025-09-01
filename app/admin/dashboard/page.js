@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-
+import { useState, useEffect } from 'react';
 import { UserPlus, LogOut, Eye } from 'lucide-react'
 
 
@@ -13,11 +13,46 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState([])
   const [currentUser, setCurrentUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [selectedUser, setSelectedUser] = useState(null)
 
 
-  const [selectedUser, setSelectedUser] = useState(null) // for modal
+  // Logout handler
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
+  // Create user handler
+ 
+  const handleCreateUser = async (formData) => {
+    try {
+      const res = await fetch('/api/create-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+          name: formData.full_name,
+          dept: formData.dept,
+          year: formData.year,
+          phone: formData.phone,
+          role: formData.role || 'user'
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        alert('✅ User created successfully')
+      } else {
+        alert(`❌ Error: ${data.error}`)
+      }
+    } catch (err) {
+      console.error('Error creating user:', err)
+    }
+  }
+
+  // Initial data fetch
+ 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser()
@@ -38,44 +73,8 @@ export default function AdminDashboard() {
       setLoading(false)
     }
 
-    // inside AdminDashboard component
-const handleCreateUser = async (formData) => {
-  try {
-    const res = await fetch('/api/create-profile', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: formData.email,            // required
-        password: formData.password,      // required
-        name: formData.full_name,         // required
-        dept: formData.dept,
-        year: formData.year,
-        phone: formData.phone,
-        role: formData.role || 'user'     // default role user
-
-      })
-    })
-
-    const data = await res.json()
-    if (res.ok) {
-      alert('✅ User created successfully')
-    } else {
-      alert(`❌ Error: ${data.error}`)
-    }
-  } catch (err) {
-    console.error('Error creating user:', err)
-  }
-}
-
-
     fetchData()
   }, [router, supabase])
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
-
 
   if (loading) return <p className="p-4">Loading...</p>
 
@@ -99,8 +98,6 @@ const handleCreateUser = async (formData) => {
           </button>
         </div>
       </div>
-
-
 
       {/* Total Users */}
       <div className="bg-gray-100 rounded-xl p-4 shadow mb-6 text-center">
@@ -143,8 +140,6 @@ const handleCreateUser = async (formData) => {
           </tbody>
         </table>
       </div>
-
-
 
       {/* Modal for User Details */}
       {selectedUser && (
