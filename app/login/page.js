@@ -24,41 +24,37 @@ export default function LoginPage() {
   }
 
   const handleLogin = async (e) => {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
 
-    try {
-      const { data, error: authError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      })
+  e.preventDefault()
+  setLoading(true)
+  setError('')
 
-      if (authError) throw authError
-      const user = data.user
-      if (!user) throw new Error("Login failed: no user")
+  try {
+    const { data, error: authError } = await supabase.auth.signInWithPassword({
+      email: formData.email,
+      password: formData.password,
+    })
 
-      // Fetch role from profiles table
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+    if (authError) throw authError
+    const user = data.user
+    if (!user) throw new Error("Login failed: no user")
 
-      if (profileError) throw profileError
-      if (!profile || !profile.role) throw new Error("User role not found")
+    // ✅ Fetch role from profiles table
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles_new')
+      .select('role')
+      .eq('id', user.id)
+      .single()
 
-      // Redirect based on role
-      if (profile.role === 'admin') {
-        router.push('/admin/dashboard')
-      } else {
-        router.push('/user/dashboard')
-      }
+    if (profileError) throw profileError
+    if (!profile || !profile.role) throw new Error("User role not found")
 
-    } catch (error) {
-      setError(error.message)
-    } finally {
-      setLoading(false)
+    // Redirect based on role
+    if (profile.role === 'admin') {
+      router.push('/admin/dashboard')
+    } else {
+      router.push('/user/dashboard')
+
     }
   }
 
