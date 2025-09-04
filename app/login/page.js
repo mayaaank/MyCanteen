@@ -24,37 +24,40 @@ export default function LoginPage() {
   }
 
   const handleLogin = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
 
-  e.preventDefault()
-  setLoading(true)
-  setError('')
+    try {
+      const { data, error: authError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      })
 
-  try {
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email: formData.email,
-      password: formData.password,
-    })
+      if (authError) throw authError
+      const user = data.user
+      if (!user) throw new Error('Login failed: no user')
 
-    if (authError) throw authError
-    const user = data.user
-    if (!user) throw new Error("Login failed: no user")
+      // ✅ Fetch role from profiles table
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles_new')
+        .select('role')
+        .eq('id', user.id)
+        .single()
 
-    // ✅ Fetch role from profiles table
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles_new')
-      .select('role')
-      .eq('id', user.id)
-      .single()
+      if (profileError) throw profileError
+      if (!profile || !profile.role) throw new Error('User role not found')
 
-    if (profileError) throw profileError
-    if (!profile || !profile.role) throw new Error("User role not found")
-
-    // Redirect based on role
-    if (profile.role === 'admin') {
-      router.push('/admin/dashboard')
-    } else {
-      router.push('/user/dashboard')
-
+      // Redirect based on role
+      if (profile.role === 'admin') {
+        router.push('/admin/dashboard')
+      } else {
+        router.push('/user/dashboard')
+      }
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -65,7 +68,7 @@ export default function LoginPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <button 
+            <button
               onClick={() => router.push('/')}
               className="flex items-center gap-2 hover:opacity-80 transition"
             >
@@ -92,8 +95,12 @@ export default function LoginPage() {
             <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-700 rounded-2xl mb-6">
               <div className="text-2xl font-bold text-white">MC</div>
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Welcome Back</h1>
-            <p className="text-lg text-gray-600">Sign in to access your mess dashboard</p>
+            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
+              Welcome Back
+            </h1>
+            <p className="text-lg text-gray-600">
+              Sign in to access your mess dashboard
+            </p>
           </div>
 
           {/* Login Card */}
@@ -107,7 +114,8 @@ export default function LoginPage() {
               </div>
             )}
 
-            <div className="space-y-6" onSubmit={handleLogin}>
+            {/* Use a form instead of div so Enter works */}
+            <form className="space-y-6" onSubmit={handleLogin}>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
                   Email Address
@@ -118,7 +126,6 @@ export default function LoginPage() {
                   autoComplete="email"
                   value={formData.email}
                   onChange={handleChange}
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
                   required
                   placeholder="Enter your email address"
                   className="w-full px-4 py-4 text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition placeholder-gray-500"
@@ -136,7 +143,6 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     value={formData.password}
                     onChange={handleChange}
-                    onKeyDown={(e) => e.key === 'Enter' && handleLogin(e)}
                     placeholder="Enter your password"
                     required
                     minLength={6}
@@ -153,7 +159,7 @@ export default function LoginPage() {
               </div>
 
               <button
-                onClick={handleLogin}
+                type="submit"
                 disabled={loading}
                 className="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-4 px-6 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg hover:shadow-xl"
               >
@@ -166,7 +172,7 @@ export default function LoginPage() {
                   'Sign In to Dashboard'
                 )}
               </button>
-            </div>
+            </form>
 
             {/* Additional Info */}
             <div className="mt-8 pt-6 border-t border-gray-100">
@@ -174,8 +180,10 @@ export default function LoginPage() {
                 <p className="text-sm text-gray-500 mb-4">
                   Having trouble accessing your account?
                 </p>
-                <button 
-                  onClick={() => setError('Please contact your administrator for support')}
+                <button
+                  onClick={() =>
+                    setError('Please contact your administrator for support')
+                  }
                   className="text-blue-700 hover:text-blue-800 font-medium text-sm transition"
                 >
                   Contact Support
