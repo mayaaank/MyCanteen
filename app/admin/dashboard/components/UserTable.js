@@ -28,6 +28,8 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
   };
 
   const handleAttendanceToggle = async (userId, currentAttendance) => {
+    console.log('Toggling attendance for user:', userId, 'Current:', currentAttendance);
+    
     setUpdatingPoll(prev => ({ ...prev, [`${userId}_attendance`]: true }));
     
     const today = new Date().toISOString().slice(0, 10);
@@ -35,19 +37,28 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
     
     try {
       const existingResponse = getPollResponse(userId);
+      console.log('Existing response:', existingResponse);
       
       if (existingResponse) {
         // Update existing response
-        const { error } = await supabase
+        console.log('Updating existing response...');
+        const { data, error } = await supabase
           .from('poll_responses')
           .update({ present: newAttendance })
           .eq('user_id', userId)
-          .eq('date', today);
+          .eq('date', today)
+          .select(); // Add select to return updated data
 
-        if (error) throw error;
+        console.log('Update result:', { data, error });
+        
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw new Error(error.message || 'Failed to update attendance');
+        }
       } else {
         // Create new response with default values
-        const { error } = await supabase
+        console.log('Creating new response...');
+        const { data, error } = await supabase
           .from('poll_responses')
           .insert({
             user_id: userId,
@@ -55,23 +66,34 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
             present: newAttendance,
             portion_size: 'full', // default portion
             confirmation_status: 'pending'
-          });
+          })
+          .select(); // Add select to return inserted data
 
-        if (error) throw error;
+        console.log('Insert result:', { data, error });
+        
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw new Error(error.message || 'Failed to create attendance record');
+        }
       }
 
       // Call the parent component's update handler
       if (onPollUpdate) {
+        console.log('Calling onPollUpdate...');
         onPollUpdate();
       }
     } catch (error) {
       console.error('Error updating attendance:', error);
+      // Show user-friendly error message
+      alert(`Failed to update attendance: ${error.message || 'Unknown error'}`);
     }
 
     setUpdatingPoll(prev => ({ ...prev, [`${userId}_attendance`]: false }));
   };
 
   const handlePortionToggle = async (userId, currentPortion) => {
+    console.log('Toggling portion for user:', userId, 'Current:', currentPortion);
+    
     setUpdatingPoll(prev => ({ ...prev, [`${userId}_portion`]: true }));
     
     const today = new Date().toISOString().slice(0, 10);
@@ -79,19 +101,28 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
     
     try {
       const existingResponse = getPollResponse(userId);
+      console.log('Existing response:', existingResponse);
       
       if (existingResponse) {
         // Update existing response
-        const { error } = await supabase
+        console.log('Updating existing response...');
+        const { data, error } = await supabase
           .from('poll_responses')
           .update({ portion_size: newPortion })
           .eq('user_id', userId)
-          .eq('date', today);
+          .eq('date', today)
+          .select(); // Add select to return updated data
 
-        if (error) throw error;
+        console.log('Update result:', { data, error });
+        
+        if (error) {
+          console.error('Supabase update error:', error);
+          throw new Error(error.message || 'Failed to update portion size');
+        }
       } else {
         // Create new response with default values
-        const { error } = await supabase
+        console.log('Creating new response...');
+        const { data, error } = await supabase
           .from('poll_responses')
           .insert({
             user_id: userId,
@@ -99,42 +130,69 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
             present: true, // default attendance
             portion_size: newPortion,
             confirmation_status: 'pending'
-          });
+          })
+          .select(); // Add select to return inserted data
 
-        if (error) throw error;
+        console.log('Insert result:', { data, error });
+        
+        if (error) {
+          console.error('Supabase insert error:', error);
+          throw new Error(error.message || 'Failed to create portion record');
+        }
       }
 
       // Call the parent component's update handler
       if (onPollUpdate) {
+        console.log('Calling onPollUpdate...');
         onPollUpdate();
       }
     } catch (error) {
       console.error('Error updating portion:', error);
+      // Show user-friendly error message
+      alert(`Failed to update portion size: ${error.message || 'Unknown error'}`);
     }
 
     setUpdatingPoll(prev => ({ ...prev, [`${userId}_portion`]: false }));
   };
 
   const handleConfirmResponse = async (userId) => {
+    console.log('Confirming response for user:', userId);
+    
     setUpdatingPoll(prev => ({ ...prev, [`${userId}_confirm`]: true }));
     
     const today = new Date().toISOString().slice(0, 10);
     
     try {
-      const { error } = await supabase
+      const existingResponse = getPollResponse(userId);
+      
+      if (!existingResponse) {
+        throw new Error('No poll response found to confirm');
+      }
+
+      console.log('Confirming existing response...');
+      const { data, error } = await supabase
         .from('poll_responses')
         .update({ confirmation_status: 'confirmed' })
         .eq('user_id', userId)
-        .eq('date', today);
+        .eq('date', today)
+        .select(); // Add select to return updated data
 
-      if (error) throw error;
+      console.log('Confirm result:', { data, error });
+
+      if (error) {
+        console.error('Supabase confirm error:', error);
+        throw new Error(error.message || 'Failed to confirm response');
+      }
 
       // Call the parent component's update handler
       if (onPollUpdate) {
+        console.log('Calling onPollUpdate...');
         onPollUpdate();
       }
     } catch (error) {
       console.error('Error confirming response:', error);
+      // Show user-friendly error message
+      alert(`Failed to confirm response: ${error.message || 'Unknown error'}`);
     }
 
     setUpdatingPoll(prev => ({ ...prev, [`${userId}_confirm`]: false }));
