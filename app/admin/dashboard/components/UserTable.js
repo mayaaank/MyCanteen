@@ -1,14 +1,9 @@
-// components/dashboard/UserTable.js
+// components/dashboard/UserTable.js - Cleaned version without poll functionality
 'use client'
 
-import { Eye, Users, User, ToggleLeft, ToggleRight, Check, Clock, CheckCircle } from 'lucide-react';
-import { useState } from 'react';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { Eye, Users, User, Mail, Phone, Calendar } from 'lucide-react';
 
-const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdate }) => {
-  const [updatingPoll, setUpdatingPoll] = useState({});
-  const supabase = createClientComponentClient();
-
+const UserTable = ({ users, onViewUser, loading }) => {
   const getRoleBadge = (role) => {
     const roleStyles = {
       admin: "bg-red-100 text-red-800",
@@ -23,179 +18,13 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
     );
   };
 
-  const getPollResponse = (userId) => {
-    return pollResponses.find(response => response.user_id === userId);
-  };
-
-  const handleAttendanceToggle = async (userId, currentAttendance) => {
-    console.log('Toggling attendance for user:', userId, 'Current:', currentAttendance);
-    
-    setUpdatingPoll(prev => ({ ...prev, [`${userId}_attendance`]: true }));
-    
-    const today = new Date().toISOString().slice(0, 10);
-    const newAttendance = !currentAttendance;
-    
-    try {
-      const existingResponse = getPollResponse(userId);
-      console.log('Existing response:', existingResponse);
-      
-      if (existingResponse) {
-        // Update existing response
-        console.log('Updating existing response...');
-        const { data, error } = await supabase
-          .from('poll_responses')
-          .update({ present: newAttendance })
-          .eq('user_id', userId)
-          .eq('date', today)
-          .select(); // Add select to return updated data
-
-        console.log('Update result:', { data, error });
-        
-        if (error) {
-          console.error('Supabase update error:', error);
-          throw new Error(error.message || 'Failed to update attendance');
-        }
-      } else {
-        // Create new response with default values
-        console.log('Creating new response...');
-        const { data, error } = await supabase
-          .from('poll_responses')
-          .insert({
-            user_id: userId,
-            date: today,
-            present: newAttendance,
-            portion_size: 'full', // default portion
-            confirmation_status: 'pending'
-          })
-          .select(); // Add select to return inserted data
-
-        console.log('Insert result:', { data, error });
-        
-        if (error) {
-          console.error('Supabase insert error:', error);
-          throw new Error(error.message || 'Failed to create attendance record');
-        }
-      }
-
-      // Call the parent component's update handler
-      if (onPollUpdate) {
-        console.log('Calling onPollUpdate...');
-        onPollUpdate();
-      }
-    } catch (error) {
-      console.error('Error updating attendance:', error);
-      // Show user-friendly error message
-      alert(`Failed to update attendance: ${error.message || 'Unknown error'}`);
-    }
-
-    setUpdatingPoll(prev => ({ ...prev, [`${userId}_attendance`]: false }));
-  };
-
-  const handlePortionToggle = async (userId, currentPortion) => {
-    console.log('Toggling portion for user:', userId, 'Current:', currentPortion);
-    
-    setUpdatingPoll(prev => ({ ...prev, [`${userId}_portion`]: true }));
-    
-    const today = new Date().toISOString().slice(0, 10);
-    const newPortion = currentPortion === 'full' ? 'half' : 'full';
-    
-    try {
-      const existingResponse = getPollResponse(userId);
-      console.log('Existing response:', existingResponse);
-      
-      if (existingResponse) {
-        // Update existing response
-        console.log('Updating existing response...');
-        const { data, error } = await supabase
-          .from('poll_responses')
-          .update({ portion_size: newPortion })
-          .eq('user_id', userId)
-          .eq('date', today)
-          .select(); // Add select to return updated data
-
-        console.log('Update result:', { data, error });
-        
-        if (error) {
-          console.error('Supabase update error:', error);
-          throw new Error(error.message || 'Failed to update portion size');
-        }
-      } else {
-        // Create new response with default values
-        console.log('Creating new response...');
-        const { data, error } = await supabase
-          .from('poll_responses')
-          .insert({
-            user_id: userId,
-            date: today,
-            present: true, // default attendance
-            portion_size: newPortion,
-            confirmation_status: 'pending'
-          })
-          .select(); // Add select to return inserted data
-
-        console.log('Insert result:', { data, error });
-        
-        if (error) {
-          console.error('Supabase insert error:', error);
-          throw new Error(error.message || 'Failed to create portion record');
-        }
-      }
-
-      // Call the parent component's update handler
-      if (onPollUpdate) {
-        console.log('Calling onPollUpdate...');
-        onPollUpdate();
-      }
-    } catch (error) {
-      console.error('Error updating portion:', error);
-      // Show user-friendly error message
-      alert(`Failed to update portion size: ${error.message || 'Unknown error'}`);
-    }
-
-    setUpdatingPoll(prev => ({ ...prev, [`${userId}_portion`]: false }));
-  };
-
-  const handleConfirmResponse = async (userId) => {
-    console.log('Confirming response for user:', userId);
-    
-    setUpdatingPoll(prev => ({ ...prev, [`${userId}_confirm`]: true }));
-    
-    const today = new Date().toISOString().slice(0, 10);
-    
-    try {
-      const existingResponse = getPollResponse(userId);
-      
-      if (!existingResponse) {
-        throw new Error('No poll response found to confirm');
-      }
-
-      console.log('Confirming existing response...');
-      const { data, error } = await supabase
-        .from('poll_responses')
-        .update({ confirmation_status: 'confirmed' })
-        .eq('user_id', userId)
-        .eq('date', today)
-        .select(); // Add select to return updated data
-
-      console.log('Confirm result:', { data, error });
-
-      if (error) {
-        console.error('Supabase confirm error:', error);
-        throw new Error(error.message || 'Failed to confirm response');
-      }
-
-      // Call the parent component's update handler
-      if (onPollUpdate) {
-        console.log('Calling onPollUpdate...');
-        onPollUpdate();
-      }
-    } catch (error) {
-      console.error('Error confirming response:', error);
-      // Show user-friendly error message
-      alert(`Failed to confirm response: ${error.message || 'Unknown error'}`);
-    }
-
-    setUpdatingPoll(prev => ({ ...prev, [`${userId}_confirm`]: false }));
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   };
 
   if (loading) {
@@ -215,170 +44,128 @@ const UserTable = ({ users, onViewUser, loading, pollResponses = [], onPollUpdat
       <div className="px-6 py-12 text-center">
         <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-medium text-gray-900 mb-2">No users found</h3>
-        <p className="text-gray-600">Try adjusting your search or filter criteria.</p>
+        <p className="text-gray-600">Try adjusting your search criteria or create a new user.</p>
       </div>
     );
   }
 
-  // Sort users: poll responders first, then by confirmation status
+  // Sort users: admins first, then by creation date
   const sortedUsers = [...users].sort((a, b) => {
-    const aResponse = getPollResponse(a.id);
-    const bResponse = getPollResponse(b.id);
-    
-    const aHasResponse = !!aResponse;
-    const bHasResponse = !!bResponse;
-    
-    // First priority: users with responses
-    if (aHasResponse && !bHasResponse) return -1;
-    if (!aHasResponse && bHasResponse) return 1;
-    
-    // Second priority: pending confirmations first
-    if (aHasResponse && bHasResponse) {
-      const aPending = aResponse.confirmation_status === 'pending';
-      const bPending = bResponse.confirmation_status === 'pending';
-      
-      if (aPending && !bPending) return -1;
-      if (!aPending && bPending) return 1;
-    }
-    
-    return 0;
+    if (a.role === 'admin' && b.role !== 'admin') return -1;
+    if (a.role !== 'admin' && b.role === 'admin') return 1;
+    return new Date(b.created_at) - new Date(a.created_at);
   });
 
   return (
     <div className="px-6 py-4">
       <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+          <h3 className="text-lg font-semibold text-gray-900">User Management</h3>
+          <p className="text-sm text-gray-600 mt-1">
+            Manage user accounts and permissions
+          </p>
+        </div>
+        
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poll Status</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Attendance</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Portion</th>
-                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confirmation</th>
-                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  User
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Role
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Contact
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Joined
+                </th>
+                <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Bill Status
+                </th>
+                <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {sortedUsers.map((user) => {
-                const pollResponse = getPollResponse(user.id);
-                const hasResponse = !!pollResponse;
-                const isPresent = pollResponse?.present ?? false;
-                const portionSize = pollResponse?.portion_size ?? 'full';
-                const confirmationStatus = pollResponse?.confirmation_status ?? 'pending';
-                const isPending = confirmationStatus === 'pending';
-
-                return (
-                  <tr key={user.id} className={`hover:bg-gray-50 transition-colors duration-150 ${
-                    hasResponse ? (isPending ? 'bg-yellow-50' : 'bg-green-50') : ''
-                  }`}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          hasResponse 
-                            ? (isPending ? 'bg-yellow-100' : 'bg-green-100')
-                            : 'bg-blue-100'
-                        }`}>
-                          <User className={`w-5 h-5 ${
-                            hasResponse 
-                              ? (isPending ? 'text-yellow-600' : 'text-green-600')
-                              : 'text-blue-600'
-                          }`} />
+              {sortedUsers.map((user) => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors duration-150">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                        user.role === 'admin' ? 'bg-red-100' : 'bg-blue-100'
+                      }`}>
+                        <User className={`w-5 h-5 ${
+                          user.role === 'admin' ? 'text-red-600' : 'text-blue-600'
+                        }`} />
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">
+                          {user.full_name || 'N/A'}
                         </div>
-                        <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">{user.full_name}</div>
-                          <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-sm text-gray-500 flex items-center gap-1">
+                          <Mail size={12} />
+                          {user.email}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">{user.contact_number}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                        hasResponse 
-                          ? (isPending ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800')
-                          : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {hasResponse ? (isPending ? 'Pending' : 'Confirmed') : 'No Response'}
+                    </div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    {getRoleBadge(user.role)}
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 flex items-center gap-1">
+                      <Phone size={12} />
+                      {user.contact_number || 'Not provided'}
+                    </div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900 flex items-center gap-1">
+                      <Calendar size={12} />
+                      {formatDate(user.created_at)}
+                    </div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm">
+                      <span className="text-gray-900 font-medium">
+                        ₹{user.total_bill || 0}
                       </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handleAttendanceToggle(user.id, isPresent)}
-                        disabled={updatingPoll[`${user.id}_attendance`]}
-                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          isPresent 
-                            ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                            : 'bg-red-100 text-red-800 hover:bg-red-200'
-                        } ${updatingPoll[`${user.id}_attendance`] ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {isPresent ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
-                        {updatingPoll[`${user.id}_attendance`] 
-                          ? 'Updating...' 
-                          : isPresent ? 'Present' : 'Absent'
-                        }
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={() => handlePortionToggle(user.id, portionSize)}
-                        disabled={updatingPoll[`${user.id}_portion`]}
-                        className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                          portionSize === 'full' 
-                            ? 'bg-blue-100 text-blue-800 hover:bg-blue-200' 
-                            : 'bg-orange-100 text-orange-800 hover:bg-orange-200'
-                        } ${updatingPoll[`${user.id}_portion`] ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {updatingPoll[`${user.id}_portion`] 
-                          ? 'Updating...' 
-                          : portionSize === 'full' ? 'Full Plate' : 'Half Plate'
-                        }
-                      </button>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {hasResponse && isPending ? (
-                        <button
-                          onClick={() => handleConfirmResponse(user.id)}
-                          disabled={updatingPoll[`${user.id}_confirm`]}
-                          className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {updatingPoll[`${user.id}_confirm`] ? (
-                            <>
-                              <Clock size={16} className="animate-spin" />
-                              Confirming...
-                            </>
-                          ) : (
-                            <>
-                              <Check size={16} />
-                              Confirm
-                            </>
-                          )}
-                        </button>
-                      ) : hasResponse && !isPending ? (
-                        <span className="inline-flex items-center gap-2 px-3 py-2 bg-green-100 text-green-800 text-sm font-medium rounded-lg">
-                          <CheckCircle size={16} />
-                          Confirmed
-                        </span>
-                      ) : (
-                        <span className="text-sm text-gray-500">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => onViewUser(user)}
-                        className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200"
-                      >
-                        <Eye size={16} />
-                        View
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      <span className="text-gray-500 ml-1 text-xs">total</span>
+                    </div>
+                  </td>
+                  
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <button
+                      onClick={() => onViewUser(user)}
+                      className="inline-flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-all duration-200"
+                    >
+                      <Eye size={16} />
+                      View Details
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
+        </div>
+        
+        <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          <div className="flex items-center justify-between text-sm text-gray-600">
+            <span>
+              Showing {users.length} user{users.length !== 1 ? 's' : ''}
+            </span>
+            <span>
+              {users.filter(u => u.role === 'admin').length} admin{users.filter(u => u.role === 'admin').length !== 1 ? 's' : ''} • {' '}
+              {users.filter(u => u.role === 'user').length} regular user{users.filter(u => u.role === 'user').length !== 1 ? 's' : ''}
+            </span>
+          </div>
         </div>
       </div>
     </div>

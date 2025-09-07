@@ -1,11 +1,9 @@
-// app/admin/dashboard/page.js
+// app/admin/dashboard/page.js - Cleaned version without poll functionality
 'use client'
-
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-
 
 import DashboardHeader from './components/DashboardHeader';
 import StatsCards from './components/StatsCards';
@@ -13,172 +11,173 @@ import SearchBar from './components/SearchAndFilter';
 import UserTable from './components/UserTable';
 import UserDetailModal from './components/UserDetailModal';
 
-
 export default function AdminDashboard() {
- const router = useRouter();
- const supabase = createClientComponentClient();
+  const router = useRouter();
+  const supabase = createClientComponentClient();
 
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
- const [users, setUsers] = useState([]);
- const [pollResponses, setPollResponses] = useState([]);
- const [currentUser, setCurrentUser] = useState(null);
- const [loading, setLoading] = useState(true);
- const [selectedUser, setSelectedUser] = useState(null);
- const [searchTerm, setSearchTerm] = useState('');
- const [totalRevenue, setTotalRevenue] = useState(50000); // dummy data for now
+  // Fetch revenue data
+  async function fetchRevenueData() {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('amount');
 
+      if (!error && data) {
+        const revenue = data.reduce((sum, row) => sum + row.amount, 0);
+        setTotalRevenue(revenue);
+      }
+    } catch (error) {
+      console.error('Error fetching revenue:', error);
+    }
+  }
 
- async function fetchData() {
-   const { data, error } = await supabase
-     .from('transactions')
-     .select('amount');
+  // Auth + Initial load
+  useEffect(() => {
+    const fetchInitial = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
 
+        // Check if user is admin
+        const { data: profile } = await supabase
+          .from('profiles_new')
+          .select('role')
+          .eq('id', user.id)
+          .single();
 
-   if (!error && data) {
-     const revenue = data.reduce((sum, row) => sum + row.amount, 0);
-     setTotalRevenue(revenue);
-   }
- }
+        if (profile?.role !== 'admin') {
+          router.push('/unauthorized');
+          return;
+        }
 
+        setCurrentUser(user);
 
- const fetchPollResponses = async () => {
-   const today = new Date().toISOString().slice(0, 10);
-   const { data: pollData, error: pollError } = await supabase
-     .from('poll_responses')
-     .select('*')
-     .eq('date', today);
+        // Fetch all users
+        const { data: usersData, error } = await supabase
+          .from('profiles_new')
+          .select('*')
+          .order('created_at', { ascending: false });
 
+        if (error) {
+          console.error('Error fetching users:', error.message);
+        } else {
+          setUsers(usersData || []);
+        }
+      } catch (error) {
+        console.error('Error in initial fetch:', error);
+        router.push('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-   if (!pollError) {
-     setPollResponses(pollData || []);
-   }
- };
+    fetchInitial();
+    fetchRevenueData();
+  }, [router, supabase]);
 
+  // Search functionality
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!searchTerm.trim()) {
+        // If no search term, fetch all users
+        try {
+          const { data, error } = await supabase
+            .from('profiles_new')
+            .select('*')
+            .order('created_at', { ascending: false });
 
- // Auth + Initial load
- useEffect(() => {
-   const fetchInitial = async () => {
-     const { data: { user } } = await supabase.auth.getUser();
-     if (!user) {
-       router.push('/login');
-       return;
-     }
-     setCurrentUser(user);
+          if (error) {
+            console.error('Fetch error:', error.message);
+          } else {
+            setUsers(data || []);
+          }
+        } catch (error) {
+          console.error('Error fetching all users:', error);
+        }
+        return;
+      }
 
+      setLoading(true);
 
-     const { data, error } = await supabase.from('profiles_new').select('*');
-     if (error) console.error(error.message);
-     else setUsers(data);
+      try {
+        const { data, error } = await supabase
+          .from('profiles_new')
+          .select('*')
+          .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+          .order('created_at', { ascending: false });
 
+        if (error) {
+          console.error('Search error:', error.message);
+        } else {
+          setUsers(data || []);
+        }
+      } catch (error) {
+        console.error('Error in search:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-     // Fetch today's poll responses
-     await fetchPollResponses();
+    // Debounce search
+    const timeoutId = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, supabase]);
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
-     setLoading(false);
-   };
+  const handleCreateUser = () => {
+    router.push('/admin/create-user');
+  };
 
+  const handleManagePolls = () => {
+    router.push('/admin/polls');
+  };
 
-   fetchInitial();
-   fetchData(); // Fetch revenue data
- }, [router, supabase]);
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader
+        onCreateUser={handleCreateUser}
+        onManagePolls={handleManagePolls}
+        onLogout={handleLogout}
+        currentUser={currentUser}
+      />
+     
+      <StatsCards
+        totalUsers={users.length}
+        activeUsers={users.filter(u => u.role === 'user').length}
+        adminUsers={users.filter(u => u.role === 'admin').length}
+        totalRevenue={totalRevenue}
+      />
 
-
- // 🔍 Search query against Supabase
- useEffect(() => {
-   const fetchUsers = async () => {
-     setLoading(true);
-
-
-     let query = supabase.from('profiles_new').select('*');
-
-
-     if (searchTerm.trim()) {
-       query = query.or(
-         `full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`
-       );
-     }
-
-
-     const { data, error } = await query;
-     if (error) {
-       console.error('Search error:', error.message);
-     } else {
-       setUsers(data || []);
-     }
-
-
-     setLoading(false);
-   };
-
-
-   if (searchTerm.trim() !== '') {
-     fetchUsers();
-   } else {
-     // If no search term, fetch all users
-     //fetchAllUsers();
-     setLoading(false);
-   }
- }, [searchTerm, supabase]);
-
-
- const handlePollUpdate = () => {
-   // Refetch poll responses when admin makes changes
-   fetchPollResponses();
- };
-
-
- const handleLogout = async () => {
-   await supabase.auth.signOut();
-   router.push('/login');
- };
-
-
- const handleCreateUser = () => {
-   router.push('/admin/create-user');
- };
-
-
- // Calculate poll stats
- const pollStats = {
-   totalResponses: pollResponses.length,
-   pendingConfirmations: pollResponses.filter(r => r.confirmation_status === 'pending').length,
-   confirmedResponses: pollResponses.filter(r => r.confirmation_status === 'confirmed').length,
-   attendingUsers: pollResponses.filter(r => r.present).length,
- };
-
-
- return (
-   <div className="min-h-screen bg-gray-50">
-     <DashboardHeader
-       onCreateUser={handleCreateUser}
-       onLogout={handleLogout}
-       currentUser={currentUser}
-     />
-    
-     <StatsCards
-       totalUsers={users.length}
-       activeUsers={users.filter(u => u.role === 'user').length}
-       totalRevenue={totalRevenue}
-       pollStats={pollStats}
-     />
-
-
-     <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
-    
-     <UserTable
-       users={users}
-       pollResponses={pollResponses}
-       onViewUser={(user) => setSelectedUser(user)}
-       onPollUpdate={handlePollUpdate}
-       loading={loading}
-     />
-    
-     <UserDetailModal
-       user={selectedUser}
-       onClose={() => setSelectedUser(null)}
-     />
-   </div>
- );
+      <SearchBar 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm}
+        placeholder="Search users by name or email..."
+      />
+     
+      <UserTable
+        users={users}
+        onViewUser={(user) => setSelectedUser(user)}
+        loading={loading}
+      />
+     
+      <UserDetailModal
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
+    </div>
+  );
 }
-
