@@ -27,15 +27,14 @@ export default function PollHeader({ onLogout, currentUser }) {
               <p className="text-sm text-gray-600">Manage daily meal attendance and confirmations</p>
             </div>
           </div>
-          /*<div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">{currentUser?.email}</p>
               <p className="text-xs text-gray-600">Admin</p>
             </div>
             <button
               onClick={onLogout}
-              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors"
-            >
+              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition-colors">
               Logout
             </button>
           </div>
