@@ -1,4 +1,4 @@
-// app/admin/dashboard/page.js - Cleaned version without poll functionality
+// app/admin/dashboard/page.js - Updated with user update handling
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -38,6 +38,30 @@ export default function AdminDashboard() {
     }
   }
 
+  // Fetch users function (to be reused)
+  const fetchUsers = async (searchQuery = '') => {
+    try {
+      let query = supabase
+        .from('profiles_new')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (searchQuery.trim()) {
+        query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        console.error('Fetch error:', error.message);
+      } else {
+        setUsers(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error);
+    }
+  };
+
   // Auth + Initial load
   useEffect(() => {
     const fetchInitial = async () => {
@@ -63,16 +87,7 @@ export default function AdminDashboard() {
         setCurrentUser(user);
 
         // Fetch all users
-        const { data: usersData, error } = await supabase
-          .from('profiles_new')
-          .select('*')
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Error fetching users:', error.message);
-        } else {
-          setUsers(usersData || []);
-        }
+        await fetchUsers();
       } catch (error) {
         console.error('Error in initial fetch:', error);
         router.push('/login');
@@ -87,51 +102,29 @@ export default function AdminDashboard() {
 
   // Search functionality
   useEffect(() => {
-    const fetchUsers = async () => {
-      if (!searchTerm.trim()) {
-        // If no search term, fetch all users
-        try {
-          const { data, error } = await supabase
-            .from('profiles_new')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-          if (error) {
-            console.error('Fetch error:', error.message);
-          } else {
-            setUsers(data || []);
-          }
-        } catch (error) {
-          console.error('Error fetching all users:', error);
-        }
-        return;
-      }
-
+    const performSearch = async () => {
       setLoading(true);
-
-      try {
-        const { data, error } = await supabase
-          .from('profiles_new')
-          .select('*')
-          .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
-          .order('created_at', { ascending: false });
-
-        if (error) {
-          console.error('Search error:', error.message);
-        } else {
-          setUsers(data || []);
-        }
-      } catch (error) {
-        console.error('Error in search:', error);
-      } finally {
-        setLoading(false);
-      }
+      await fetchUsers(searchTerm);
+      setLoading(false);
     };
 
     // Debounce search
-    const timeoutId = setTimeout(fetchUsers, 300);
+    const timeoutId = setTimeout(performSearch, 300);
     return () => clearTimeout(timeoutId);
-  }, [searchTerm, supabase]);
+  }, [searchTerm]);
+
+  // Handle user update callback
+  const handleUserUpdate = (updatedUser) => {
+    // Update the users list with the updated user data
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.id === updatedUser.id ? updatedUser : user
+      )
+    );
+    
+    // Update the selected user if it's the same user being edited
+    setSelectedUser(updatedUser);
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -177,6 +170,7 @@ export default function AdminDashboard() {
       <UserDetailModal
         user={selectedUser}
         onClose={() => setSelectedUser(null)}
+        onUserUpdate={handleUserUpdate}
       />
     </div>
   );
