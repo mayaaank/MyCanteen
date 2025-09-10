@@ -1,7 +1,7 @@
-// components/dashboard/DashboardHeader.js - Updated with Polls navigation
-import { Plus, Users, BarChart3 } from 'lucide-react';
+// app/admin/dashboard/components/DashboardHeader.js - Updated with Inventory button
+import { Plus, BarChart3, Package } from 'lucide-react';
 
-export default function DashboardHeader({ onCreateUser, onManagePolls, onLogout, currentUser }) {
+export default function DashboardHeader({ onCreateUser, onManagePolls, onManageInventory, onLogout, currentUser }) {
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -12,6 +12,14 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onLogout,
           </div>
           
           <div className="flex items-center gap-3">
+            <button
+              onClick={onManageInventory}
+              className="inline-flex items-center gap-2 bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 transition-colors"
+            >
+              <Package size={16} />
+              Inventory & Expenses
+            </button>
+            
             <button
               onClick={onManagePolls}
               className="inline-flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors"

@@ -1,4 +1,4 @@
-// app/admin/dashboard/page.js - Cleaned version without poll functionality
+// app/admin/dashboard/page.js - Updated with inventory navigation
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -146,11 +146,16 @@ export default function AdminDashboard() {
     router.push('/admin/polls');
   };
 
+  const handleManageInventory = () => {
+    router.push('/admin/inventory');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader
         onCreateUser={handleCreateUser}
         onManagePolls={handleManagePolls}
+        onManageInventory={handleManageInventory}
         onLogout={handleLogout}
         currentUser={currentUser}
       />
