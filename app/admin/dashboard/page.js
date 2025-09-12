@@ -1,168 +1,188 @@
+// app/admin/dashboard/page.js - Updated with inventory navigation
 'use client'
 
-import { useRouter } from 'next/navigation'
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { useState, useEffect } from 'react';
-import { UserPlus, LogOut, Eye } from 'lucide-react'
+import { useRouter } from 'next/navigation';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
+import DashboardHeader from './components/DashboardHeader';
+import StatsCards from './components/StatsCards';
+import SearchBar from './components/SearchAndFilter';
+import UserTable from './components/UserTable';
+import UserDetailModal from './components/UserDetailModal';
 
 export default function AdminDashboard() {
-  const router = useRouter()
-  const supabase = createClientComponentClient()
+  const router = useRouter();
+  const supabase = createClientComponentClient();
 
-  const [users, setUsers] = useState([])
-  const [currentUser, setCurrentUser] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [selectedUser, setSelectedUser] = useState(null)
+  const [users, setUsers] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [totalRevenue, setTotalRevenue] = useState(0);
 
+  // Fetch revenue data
+  async function fetchRevenueData() {
+    try {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('amount');
 
-  // Logout handler
+      if (!error && data) {
+        const revenue = data.reduce((sum, row) => sum + row.amount, 0);
+        setTotalRevenue(revenue);
+      }
+    } catch (error) {
+      console.error('Error fetching revenue:', error);
+    }
+  }
+
+  // Auth + Initial load
+  useEffect(() => {
+    const fetchInitial = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          router.push('/login');
+          return;
+        }
+
+        // Check if user is admin
+        const { data: profile } = await supabase
+          .from('profiles_new')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+
+        if (profile?.role !== 'admin') {
+          router.push('/unauthorized');
+          return;
+        }
+
+        setCurrentUser(user);
+
+        // Fetch all users
+        const { data: usersData, error } = await supabase
+          .from('profiles_new')
+          .select('*')
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching users:', error.message);
+        } else {
+          setUsers(usersData || []);
+        }
+      } catch (error) {
+        console.error('Error in initial fetch:', error);
+        router.push('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchInitial();
+    fetchRevenueData();
+  }, [router, supabase]);
+
+  // Search functionality
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (!searchTerm.trim()) {
+        // If no search term, fetch all users
+        try {
+          const { data, error } = await supabase
+            .from('profiles_new')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+          if (error) {
+            console.error('Fetch error:', error.message);
+          } else {
+            setUsers(data || []);
+          }
+        } catch (error) {
+          console.error('Error fetching all users:', error);
+        }
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const { data, error } = await supabase
+          .from('profiles_new')
+          .select('*')
+          .or(`full_name.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Search error:', error.message);
+        } else {
+          setUsers(data || []);
+        }
+      } catch (error) {
+        console.error('Error in search:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Debounce search
+    const timeoutId = setTimeout(fetchUsers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, supabase]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/login')
-  }
+    await supabase.auth.signOut();
+    router.push('/login');
+  };
 
-  // Create user handler
- 
-  const handleCreateUser = async (formData) => {
-    try {
-      const res = await fetch('/api/create-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          name: formData.full_name,
-          dept: formData.dept,
-          year: formData.year,
-          phone: formData.phone,
-          role: formData.role || 'user'
-        })
-      })
-      const data = await res.json()
-      if (res.ok) {
-        alert('✅ User created successfully')
-      } else {
-        alert(`❌ Error: ${data.error}`)
-      }
-    } catch (err) {
-      console.error('Error creating user:', err)
-    }
-  }
+  const handleCreateUser = () => {
+    router.push('/admin/create-user');
+  };
 
-  // Initial data fetch
- 
-  useEffect(() => {
-    const fetchData = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) {
-        router.push('/login')
+  const handleManagePolls = () => {
+    router.push('/admin/polls');
+  };
 
-        return
-      }
-      setCurrentUser(user)
-
-
-      const { data, error } = await supabase.from('profiles_new').select('*')
-      if (error) {
-        console.error('Error fetching profiles_new:', error.message)
-      } else {
-        setUsers(data)
-      }
-      setLoading(false)
-    }
-
-    fetchData()
-  }, [router, supabase])
-
-  if (loading) return <p className="p-4">Loading...</p>
+  const handleManageInventory = () => {
+    router.push('/admin/inventory');
+  };
 
   return (
-    <div className="p-4 max-w-5xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-3">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <div className="flex gap-3">
-          <button
-            onClick={() => router.push('/admin/create-user')}
-            className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition"
-          >
-            <UserPlus size={18} /> Create User
-          </button>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition"
-          >
-            <LogOut size={18} /> Logout
-          </button>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50">
+      <DashboardHeader
+        onCreateUser={handleCreateUser}
+        onManagePolls={handleManagePolls}
+        onManageInventory={handleManageInventory}
+        onLogout={handleLogout}
+        currentUser={currentUser}
+      />
+     
+      <StatsCards
+        totalUsers={users.length}
+        activeUsers={users.filter(u => u.role === 'user').length}
+        adminUsers={users.filter(u => u.role === 'admin').length}
+        totalRevenue={totalRevenue}
+      />
 
-      {/* Total Users */}
-      <div className="bg-gray-100 rounded-xl p-4 shadow mb-6 text-center">
-        <h2 className="text-lg font-semibold">Total Users</h2>
-        <p className="text-2xl font-bold">{users.length}</p>
-      </div>
-
-      {/* Users Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full border rounded-lg shadow-sm text-sm sm:text-base">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">ID</th>
-              <th className="border p-2">Name</th>
-              <th className="border p-2">Email</th>
-              <th className="border p-2">Phone</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((u) => (
-              <tr key={u.id} className="hover:bg-gray-50">
-                <td className="border p-2">{u.id}</td>
-                <td className="border p-2">{u.name}</td>
-                <td className="border p-2">{u.email}</td>
-                <td className="border p-2">{u.phone}</td>
-                <td className="border p-2">{u.role}</td>
-                <td className="border p-2 text-center">
-                  <button
-                    onClick={() => setSelectedUser(u)}
-                    className="flex items-center gap-1 bg-indigo-600 text-white px-3 py-1 rounded-lg shadow hover:bg-indigo-700 transition mx-auto"
-
-                  >
-                    <Eye size={16} /> View
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Modal for User Details */}
-      {selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center p-4 z-50">
-          <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 relative">
-            <h2 className="text-xl font-bold mb-4">User Details</h2>
-            <p><span className="font-semibold">ID:</span> {selectedUser.id}</p>
-            <p><span className="font-semibold">Name:</span> {selectedUser.name}</p>
-            <p><span className="font-semibold">Email:</span> {selectedUser.email}</p>
-            <p><span className="font-semibold">Phone:</span> {selectedUser.phone}</p>
-            <p><span className="font-semibold">Role:</span> {selectedUser.role}</p>
-            <div className="mt-4 text-right">
-              <button
-                onClick={() => setSelectedUser(null)}
-                className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
+      <SearchBar 
+        searchTerm={searchTerm} 
+        setSearchTerm={setSearchTerm}
+        placeholder="Search users by name or email..."
+      />
+     
+      <UserTable
+        users={users}
+        onViewUser={(user) => setSelectedUser(user)}
+        loading={loading}
+      />
+     
+      <UserDetailModal
+        user={selectedUser}
+        onClose={() => setSelectedUser(null)}
+      />
     </div>
-  )
+  );
 }
