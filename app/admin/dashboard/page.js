@@ -1,4 +1,4 @@
-// app/admin/dashboard/page.js - Updated with user update handling
+// app/admin/dashboard/page.js - Alternative approach using profiles_new table
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -38,7 +38,7 @@ export default function AdminDashboard() {
     }
   }
 
-  // Fetch users function (to be reused)
+  // Simplified fetch users function
   const fetchUsers = async (searchQuery = '') => {
     try {
       let query = supabase
@@ -54,40 +54,43 @@ export default function AdminDashboard() {
 
       if (error) {
         console.error('Fetch error:', error.message);
+        setUsers([]);
       } else {
+        console.log('Fetched users:', data?.length || 0);
         setUsers(data || []);
       }
     } catch (error) {
       console.error('Error fetching users:', error);
+      setUsers([]);
     }
   };
 
-  // Auth + Initial load
   useEffect(() => {
     const fetchInitial = async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
+
         if (!user) {
           router.push('/login');
           return;
         }
 
-        // Check if user is admin
-        const { data: profile } = await supabase
+        // Check if user is admin from profiles_new table
+        const { data: profile, error } = await supabase
           .from('profiles_new')
           .select('role')
           .eq('id', user.id)
           .single();
 
-        if (profile?.role !== 'admin') {
-          router.push('/unauthorized');
+        if (error || !profile || profile.role !== 'admin') {
+          console.error('Not admin or profile not found:', error);
+          router.push('/login');
           return;
         }
 
         setCurrentUser(user);
-
-        // Fetch all users
         await fetchUsers();
+        await fetchRevenueData();
       } catch (error) {
         console.error('Error in initial fetch:', error);
         router.push('/login');
@@ -97,32 +100,30 @@ export default function AdminDashboard() {
     };
 
     fetchInitial();
-    fetchRevenueData();
   }, [router, supabase]);
 
   // Search functionality
   useEffect(() => {
     const performSearch = async () => {
-      setLoading(true);
-      await fetchUsers(searchTerm);
-      setLoading(false);
+      if (!loading) {
+        setLoading(true);
+        await fetchUsers(searchTerm);
+        setLoading(false);
+      }
     };
 
-    // Debounce search
     const timeoutId = setTimeout(performSearch, 300);
     return () => clearTimeout(timeoutId);
   }, [searchTerm]);
 
   // Handle user update callback
   const handleUserUpdate = (updatedUser) => {
-    // Update the users list with the updated user data
     setUsers(prevUsers => 
       prevUsers.map(user => 
         user.id === updatedUser.id ? updatedUser : user
       )
     );
     
-    // Update the selected user if it's the same user being edited
     setSelectedUser(updatedUser);
   };
 
