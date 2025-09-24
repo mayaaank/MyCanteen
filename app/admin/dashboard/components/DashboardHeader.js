@@ -1,3 +1,4 @@
+
 // app/admin/dashboard/components/DashboardHeader.js
 'use client';
 
@@ -7,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 export default function DashboardHeader({ onCreateUser, onManagePolls, onManageInventory, onLogout, currentUser }) {
   const router = useRouter();
+
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
@@ -30,6 +32,7 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
               </h1>
               <p className="text-xs lg:text-sm text-gray-500 hidden sm:block leading-tight">
                 Canteen Management System
+
               </p>
             </div>
           </div>
@@ -108,6 +111,7 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
               className="inline-flex items-center justify-center p-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               aria-label="Toggle menu"
             >
+\
               {isMobileMenuOpen ? (
                 <X size={20} />
               ) : (
@@ -121,6 +125,7 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
         <div className={`lg:hidden transition-all duration-200 ease-out ${
           isMobileMenuOpen 
             ? 'max-h-96 opacity-100' 
+
             : 'max-h-0 opacity-0 overflow-hidden'
         }`}>
           <nav className="py-4 space-y-2 border-t border-gray-100">
@@ -135,6 +140,7 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
               Dashboard
             </button>
 
+
             <button
               onClick={() => {
                 onManagePolls();
@@ -145,6 +151,7 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
               <BarChart3 size={18} className="text-emerald-600 flex-shrink-0" />
               Manage Polls
             </button>
+
 
             <button
               onClick={() => {
@@ -169,6 +176,7 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
                 Inventory & Expenses
               </button>
             )}
+n
             
             <button
               onClick={() => {
@@ -187,9 +195,11 @@ export default function DashboardHeader({ onCreateUser, onManagePolls, onManageI
                   onLogout();
                   setIsMobileMenuOpen(false);
                 }}
+
                 className="w-full flex items-center gap-3 text-gray-600 hover:text-red-700 hover:bg-red-50 px-4 py-3 rounded-lg transition-all duration-150 text-left font-medium border border-transparent hover:border-red-200"
               >
                 <LogOut size={18} className="flex-shrink-0" />
+
                 Sign Out
               </button>
             </div>

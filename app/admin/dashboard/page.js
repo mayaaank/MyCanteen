@@ -1,4 +1,6 @@
+
 // app/admin/dashboard/page.js - Alternative approach using profiles_new table
+
 'use client'
 
 import { useState, useEffect } from 'react';
@@ -140,11 +142,16 @@ export default function AdminDashboard() {
     router.push('/admin/polls');
   };
 
+  const handleManageInventory = () => {
+    router.push('/admin/inventory');
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader
         onCreateUser={handleCreateUser}
         onManagePolls={handleManagePolls}
+        onManageInventory={handleManageInventory}
         onLogout={handleLogout}
         currentUser={currentUser}
       />
