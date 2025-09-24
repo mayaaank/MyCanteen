@@ -32,7 +32,7 @@ const DashboardHeader = ({ onLogout, currentUser, userProfile }) => {
               onClick={() => router.push('/poll')}
               className="px-4 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg font-medium transition-colors duration-200"
             >
-              Today's Poll
+              Today&apos;s Poll
             </button>
             <button
               onClick={() => router.push('/user/billing')}
